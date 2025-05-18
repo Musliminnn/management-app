@@ -17,7 +17,8 @@ class UserSeeder extends Seeder
     {
         User::factory()->create([
             'name' => 'Superadmin',
-            'email' => 'superadmin@admin.com',
+            'email' => 'superadmin@gmail.com',
+            'password' => 'admin123',
             'role_id' => Role::where('name', RoleEnum::Superadmin->value)->first()->id,
         ]);
     }
