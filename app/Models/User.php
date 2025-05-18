@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Enums\RoleEnum;
 
 class User extends Authenticatable
 {
@@ -21,6 +22,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role_id',
     ];
 
     /**
@@ -33,6 +35,8 @@ class User extends Authenticatable
         'remember_token',
     ];
 
+    protected $with = ['role'];
+
     /**
      * Get the attributes that should be cast.
      *
@@ -44,5 +48,35 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
+    public function hasRole(RoleEnum $role): bool
+    {
+        return $this->role?->name === $role->value;
+    }
+
+    public function isSuperadmin(): bool
+    {
+        return $this->hasRole(RoleEnum::Superadmin);
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->hasRole(RoleEnum::Admin);
+    }
+
+    public function isBpp(): bool
+    {
+        return $this->hasRole(RoleEnum::BPP);
+    }
+
+    public function isPaKpa(): bool
+    {
+        return $this->hasRole(RoleEnum::PAKPA);
     }
 }
