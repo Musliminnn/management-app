@@ -2,6 +2,7 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import { RoleEnum } from '@/types/enums';
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useState } from 'react';
 
@@ -33,6 +34,14 @@ export default function Authenticated({
                                 >
                                     Dashboard
                                 </NavLink>
+                                {user?.role?.name === RoleEnum.Superadmin && (
+                                    <NavLink
+                                        href={route('register')}
+                                        active={route().current('register')}
+                                    >
+                                        Tambah User
+                                    </NavLink>
+                                )}
                             </div>
                         </div>
 
