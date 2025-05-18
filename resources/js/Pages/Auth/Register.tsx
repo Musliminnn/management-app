@@ -6,12 +6,17 @@ import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
-export default function Register() {
+export default function Register({
+    roles,
+}: {
+    roles: { value: string; label: string }[];
+}) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
         email: '',
         password: '',
         password_confirmation: '',
+        role_id: '',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -59,6 +64,28 @@ export default function Register() {
                     />
 
                     <InputError message={errors.email} className="mt-2" />
+                </div>
+
+                <div className="mt-4">
+                    <InputLabel htmlFor="role_id" value="Role" />
+
+                    <select
+                        id="role_id"
+                        name="role_id"
+                        value={data.role_id}
+                        onChange={(e) => setData('role_id', e.target.value)}
+                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                        required
+                    >
+                        <option value="">Pilih Role</option>
+                        {roles.map((role) => (
+                            <option key={role.value} value={role.value}>
+                                {role.label}
+                            </option>
+                        ))}
+                    </select>
+
+                    <InputError message={errors.role_id} className="mt-2" />
                 </div>
 
                 <div className="mt-4">
