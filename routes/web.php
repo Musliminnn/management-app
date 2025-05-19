@@ -2,10 +2,15 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RootRedirectController;
+use App\Http\Controllers\ImportController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/', RootRedirectController::class);
+Route::get('/import-file-pages', function () {
+    return Inertia::render('ImportFile');
+})->middleware(['auth']);
+Route::post('/import-file', [ImportController::class, 'import'])->name('import.subkegiatan');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
