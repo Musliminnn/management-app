@@ -11,16 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ref_bidang', function (Blueprint $table) {
+        Schema::create('ref_unit_skpd', function (Blueprint $table) {
             $table->engine = 'InnoDB';
             $table->string('kode', 100)->primary();
             $table->string('nama', 200);
 
-            $table->string('kode_urusan', 100);
-            $table->foreign('kode_urusan')
-                ->references('kode')->on('ref_urusan')
-                ->onUpdate('cascade')
-                ->onDelete('restrict');
+            $table->string('kode_skpd', 100);
+            $table->foreign('kode_skpd')->references('kode')->on('ref_skpd')
+                ->onUpdate('cascade')->onDelete('restrict');
 
             $table->timestamps();
         });
@@ -31,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('ref_bidang');
+        Schema::dropIfExists('ref_unit_skpd');
     }
 };

@@ -12,8 +12,9 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('ref_urusan', function (Blueprint $table) {
-            $table->string('kode', 50)->primary();
-            $table->string('nama', 100);
+            $table->engine = 'InnoDB';
+            $table->string('kode', 100)->primary();
+            $table->string('nama', 200);
             $table->timestamps();
         });
     }

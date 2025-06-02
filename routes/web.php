@@ -8,10 +8,13 @@ use Inertia\Inertia;
 use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', RootRedirectController::class);
-Route::get('/import-file-pages', function () {
-    return Inertia::render('ImportFile');
-})->middleware(['auth']);
-Route::post('/import-file', [ImportController::class, 'import'])->name('import.subkegiatan');
+Route::prefix('import')->group(function () {
+    Route::get('/file-pages', function () {
+        return Inertia::render('ImportFile');
+    })->name('import.file.pages');
+
+    Route::post('/file', [ImportController::class, 'import'])->name('import.file');
+});
 
 Route::get('/run-queue-multiple-times', function () {
     $times = request('times', 5);

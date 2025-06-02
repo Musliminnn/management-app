@@ -12,10 +12,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('ref_kegiatan', function (Blueprint $table) {
-            $table->string('kode', 50)->primary();
-            $table->string('nama', 100);
+            $table->engine = 'InnoDB';
+            $table->string('kode', 100)->primary();
+            $table->string('nama', 200);
 
-            $table->string('kode_program', 50);
+            $table->string('kode_program', 100);
             $table->foreign('kode_program')
                 ->references('kode')->on('ref_program')
                 ->onUpdate('cascade')

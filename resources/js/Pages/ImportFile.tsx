@@ -7,13 +7,6 @@ export default function ImportFile() {
     }>({
         file: null,
     });
-    const triggerQueueMultipleTimes = async (times = 5) => {
-        const response = await fetch(
-            `/run-queue-multiple-times?times=${times}`,
-        );
-        const result = await response.json();
-        alert(result.message);
-    };
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -23,36 +16,49 @@ export default function ImportFile() {
             return;
         }
 
-        post(route('import.subkegiatan'), {
+        post(route('import.file'), {
             forceFormData: true,
             onSuccess: () => {
-                alert('File berhasil diunggah. Menjalankan proses import...');
+                alert('File berhasil dikirim. Proses import sedang berlangsung via queue.');
                 setData('file', null);
-                triggerQueueMultipleTimes(5);
+            },
+            onError: (errors) => {
+                console.error('Error saat upload:', errors);
+                alert('Gagal mengunggah file. Silakan cek konsol.');
             },
         });
     };
 
     return (
-        <form onSubmit={handleSubmit} encType="multipart/form-data">
+        <form
+            onSubmit={handleSubmit}
+            encType="multipart/form-data"
+            className="max-w-lg mx-auto space-y-4 p-6 bg-white rounded shadow"
+        >
             <div>
+                <label className="block font-semibold mb-1">File Excel</label>
                 <input
                     type="file"
                     name="file"
                     accept=".xlsx,.xls"
-                    onChange={(e) =>
-                        setData('file', e.target.files?.[0] || null)
-                    }
+                    onChange={(e) => setData('file', e.target.files?.[0] || null)}
                     required
+                    className="border rounded p-2 w-full"
                 />
-                {errors.file && (
-                    <div className="text-red-600">{errors.file}</div>
-                )}
+                {errors.file && <div className="text-red-600 mt-1">{errors.file}</div>}
             </div>
 
-            <button type="submit" disabled={processing}>
-                {processing ? 'Mengupload...' : 'Import'}
-            </button>
+            <div>
+                <button
+                    type="submit"
+                    disabled={processing}
+                    className={`w-full px-4 py-2 rounded ${
+                        processing ? 'bg-gray-400' : 'bg-blue-600 text-white hover:bg-blue-700'
+                    }`}
+                >
+                    {processing ? 'Mengupload...' : 'Import Sekarang'}
+                </button>
+            </div>
         </form>
     );
 }
