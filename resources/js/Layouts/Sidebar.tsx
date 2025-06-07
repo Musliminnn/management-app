@@ -3,7 +3,7 @@ import { SidebarItem } from '@/Components/SidebarItem'
 const menuItems = [
   { label: 'Dashboard', path: '/dashboard', },
   { label: 'Belanja Barang & Jasa', path: '/settings', },
-  { label: 'Input DPA', path: '/profile',  },
+  { label: 'Input DPA', path: '/input-dpa',  },
   { label: 'Input Realisasi Belanja', path: '/settings', },
   { label: 'Laporan Realisasi Belanja', path: '/profile',  },
   { label: 'Belanja Pegawai', path: '/belanja', },

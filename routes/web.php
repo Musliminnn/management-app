@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\RootRedirectController;
 use App\Http\Controllers\ImportController;
+use App\Http\Controllers\InputDPAController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -14,6 +15,8 @@ Route::prefix('import')->group(function () {
 
     Route::post('/file', [ImportController::class, 'import'])->name('import.file');
 });
+
+Route::get('/input-dpa', [InputDPAController::class, 'index'])->name('inputdpa');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
