@@ -13,10 +13,14 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                roboto: ['Roboto', 'sans-serif'],
             },
             colors: {
                 main: '#078941',
+                'custom-black': '#131313',
+            },
+            boxShadow: {
+                custom: '0 0 4px rgba(0, 0, 0, 0.10)',
             },
         },
     },
