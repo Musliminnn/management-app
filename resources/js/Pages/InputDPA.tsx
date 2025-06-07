@@ -2,18 +2,31 @@ import CustomButton from '@/Components/CustomButton';
 import { FilterDropdown } from '@/Components/InputDPA/FilterDropdown';
 import { ParentLayout } from '@/Layouts/MainLayout';
 import { usePage } from '@inertiajs/react';
-import { ChevronDown, EyeIcon } from 'lucide-react';
+import { EyeIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function InputDPA() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
+    const [selectedSubKeg, setSelectedSubKeg] = useState<string | null>(null);
+    const [selectedSumberDana, setSelectedSumberDana] = useState<string | null>(
+        null,
+    );
     const page = usePage();
     const data = (page.props as any).data as Record<string, any>[];
     const programs = (page.props as any).programList as {
         kode: string;
         nama: string;
     }[];
+    const subKegiatanList = (page.props as any).subKegiatanList as {
+        kode: string;
+        nama: string;
+    }[];
+    const sumberDanaList = (page.props as any).sumberDanaList as {
+        kode: string;
+        nama: string;
+    }[];
+
     const columns = data.length > 0 ? Object.keys(data[0]) : [];
     const [visibleColumns, setVisibleColumns] = useState<string[]>(columns);
 
@@ -48,22 +61,23 @@ export default function InputDPA() {
                         }}
                     />
 
-                    <CustomButton
-                        variant="shadow"
-                        className="gap-2"
-                        onClick={() => alert('Button 3 clicked')}
-                    >
-                        <span>Sub Kegiatan</span>
-                        <ChevronDown className="size-5" />
-                    </CustomButton>
-                    <CustomButton
-                        variant="shadow"
-                        className="gap-2"
-                        onClick={() => alert('Button 3 clicked')}
-                    >
-                        <span>Sumber Dana</span>
-                        <ChevronDown className="size-5" />
-                    </CustomButton>
+                    <FilterDropdown
+                        model={subKegiatanList}
+                        placeholder="Sub Kegiatan"
+                        onSelect={(kode) => {
+                            setSelectedSubKeg(kode);
+                        }}
+                    />
+
+                    <FilterDropdown
+                        model={sumberDanaList}
+                        placeholder="Sumber Dana"
+                        onSelect={(kode) => {
+                            setSelectedSumberDana(kode);
+                            console.log('Selected Sumber Dana:', kode);
+                        }}
+                    />
+
                     <CustomButton
                         variant="shadow"
                         className="gap-4"

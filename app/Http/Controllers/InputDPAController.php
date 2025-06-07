@@ -62,9 +62,31 @@ class InputDPAController extends Controller
                 'nama' => $program->nama,
             ]);
 
+        $subKegiatanList = $data
+            ->pluck('subKegiatan')
+            ->filter()
+            ->unique('kode')
+            ->values()
+            ->map(fn($sub) => [
+                'kode' => $sub->kode,
+                'nama' => $sub->nama,
+            ]);
+
+        $sumberDanaList = $data
+            ->pluck('sumber_dana')
+            ->filter()
+            ->unique()
+            ->values()
+            ->map(fn($val) => [
+                'kode' => $val,
+                'nama' => $val,
+            ]);
+
         return Inertia::render('InputDPA', [
             'data' => $rows,
             'programList' => $programList,
+            'subKegiatanList' => $subKegiatanList,
+            'sumberDanaList' => $sumberDanaList,
         ]);
     }
 }

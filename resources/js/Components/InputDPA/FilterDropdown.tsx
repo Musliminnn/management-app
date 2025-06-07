@@ -41,7 +41,7 @@ export function FilterDropdown({
 
             <Dropdown.Content
                 align="left"
-                contentClasses="w-screen max-w-5xl bg-white"
+                contentClasses="w-screen max-w-3xl bg-white"
             >
                 {model.map((item, i) => (
                     <Dropdown.Link
