@@ -5,7 +5,6 @@ use App\Http\Controllers\RootRedirectController;
 use App\Http\Controllers\ImportController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Artisan;
 
 Route::get('/', RootRedirectController::class);
 Route::prefix('import')->group(function () {
@@ -15,16 +14,6 @@ Route::prefix('import')->group(function () {
 
     Route::post('/file', [ImportController::class, 'import'])->name('import.file');
 });
-
-Route::get('/run-queue-multiple-times', function () {
-    $times = request('times', 5);
-
-    for ($i = 0; $i < $times; $i++) {
-        Artisan::call('queue:work --once');
-    }
-
-    return response()->json(['message' => "Import Success"]);
-})->middleware(['auth']);
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
