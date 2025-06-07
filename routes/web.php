@@ -17,8 +17,11 @@ Route::prefix('import')->group(function () {
 });
 
 Route::get('/input-dpa', [InputDPAController::class, 'index'])
-->middleware(['auth', 'verified'])->name('inputdpa');
-
+    ->middleware(['auth', 'verified'])->name('inputdpa');
+Route::post('/input-dpa/filter', [InputDPAController::class, 'filter'])
+    ->middleware(['auth', 'verified'])->name('inputdpa.filter');
+Route::post('/input-dpa/reset', [InputDPAController::class, 'reset'])
+    ->middleware(['auth', 'verified'])->name('inputdpa.reset');
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');

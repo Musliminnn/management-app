@@ -10,6 +10,12 @@ class InputDPAController extends Controller
 {
     public function index(Request $request)
     {
+        $filters = session('filters', [
+            'program' => null,
+            'subKegiatan' => null,
+            'sumberDana' => null,
+        ]);
+
         $query = TrxBelanja::with([
             'subKegiatan.kegiatan.program.bidang.urusan',
             'unitSkpd.skpd',
@@ -17,23 +23,23 @@ class InputDPAController extends Controller
             'standarHarga',
         ]);
 
-        if ($request->filled('program')) {
-            $query->whereHas('subKegiatan.kegiatan.program', function ($q) use ($request) {
-                $q->where('kode', $request->program);
+        if ($filters['program']) {
+            $query->whereHas('subKegiatan.kegiatan.program', function ($q) use ($filters) {
+                $q->where('kode', $filters['program']);
             });
         }
 
-        if ($request->filled('subKegiatan')) {
-            $query->whereHas('subKegiatan', function ($q) use ($request) {
-                $q->where('kode', $request->subKegiatan);
+        if ($filters['subKegiatan']) {
+            $query->whereHas('subKegiatan', function ($q) use ($filters) {
+                $q->where('kode', $filters['subKegiatan']);
             });
         }
 
-        if ($request->filled('sumberDana')) {
-            $query->where('sumber_dana', $request->sumberDana);
+        if ($filters['sumberDana']) {
+            $query->where('sumber_dana', $filters['sumberDana']);
         }
 
-        $data = $query->orderBy('id')->paginate(10)->withQueryString();
+        $data = $query->orderBy('id')->paginate(10);
 
         $rows = collect($data->items())->map(function ($item) {
             return [
@@ -114,11 +120,24 @@ class InputDPAController extends Controller
             'programList' => $programList,
             'subKegiatanList' => $subKegiatanList,
             'sumberDanaList' => $sumberDanaList,
-            'filters' => [
-                'program' => $request->program,
-                'subKegiatan' => $request->subKegiatan,
-                'sumberDana' => $request->sumberDana,
-            ],
+            'filters' => $filters,
         ]);
+    }
+
+    public function filter(Request $request)
+    {
+        session([
+            'filters.program' => $request->input('program'),
+            'filters.subKegiatan' => $request->input('subKegiatan'),
+            'filters.sumberDana' => $request->input('sumberDana'),
+        ]);
+
+        return redirect()->route('inputdpa');
+    }
+
+    public function reset()
+    {
+        session()->forget('filters');
+        return redirect()->route('inputdpa');
     }
 }

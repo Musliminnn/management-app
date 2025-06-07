@@ -56,36 +56,55 @@ export default function InputDPA() {
         setFilters(newFilters);
         setIsLoading(true);
 
-        router.get(
-            route('inputdpa'),
-            { ...newFilters, page: 1 },
+        router.post(route('inputdpa.filter'), newFilters, {
+            preserveScroll: true,
+            preserveState: false,
+            replace: true,
+            onFinish: () => {
+                setIsLoading(false);
+            },
+        });
+    };
+
+    const resetAllFilters = () => {
+        setIsLoading(true);
+        setFilters({
+            program: null,
+            subKegiatan: null,
+            sumberDana: null,
+        });
+
+        router.post(
+            route('inputdpa.reset'),
+            {},
             {
                 preserveScroll: true,
-                preserveState: true,
+                preserveState: false,
+                replace: true,
                 onFinish: () => setIsLoading(false),
             },
         );
     };
 
-    const resetAllFilters = () => {
-        const resetFilters = {
-            program: null,
-            subKegiatan: null,
-            sumberDana: null,
-        };
+    const onPageChange = (pageUrl: string) => {
+        const urlObj = new URL(pageUrl);
+        const page = urlObj.searchParams.get('page');
 
-        setFilters(resetFilters);
         setIsLoading(true);
-
-        router.get(
-            route('inputdpa'),
-            { ...resetFilters, page: 1 },
-            {
-                preserveScroll: true,
-                preserveState: true,
-                onFinish: () => setIsLoading(false),
-            },
-        );
+        router.visit(route('inputdpa'), {
+            data: { page },
+            preserveScroll: true,
+            preserveState: true,
+            replace: true,
+            only: [
+                'data',
+                'pagination',
+                'programList',
+                'subKegiatanList',
+                'sumberDanaList',
+            ],
+            onFinish: () => setIsLoading(false),
+        });
     };
 
     useEffect(() => {
@@ -244,16 +263,14 @@ export default function InputDPA() {
                 {data.length !== 0 && (
                     <div className="mt-4 flex justify-center gap-2">
                         {pagination.links.map((link: any, i: number) => {
-                            const url = link.url
-                                ? `${link.url}&program=${filters.program ?? ''}&subKegiatan=${filters.subKegiatan ?? ''}&sumberDana=${filters.sumberDana ?? ''}`
-                                : '#';
-
                             return (
                                 <Link
                                     key={i}
-                                    href={url}
-                                    preserveScroll
-                                    preserveState
+                                    href="#"
+                                    onClick={(e) => {
+                                        e.preventDefault();
+                                        if (link.url) onPageChange(link.url);
+                                    }}
                                     className={`rounded border px-3 py-1 text-sm ${
                                         link.active
                                             ? 'bg-main text-white'
