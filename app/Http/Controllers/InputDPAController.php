@@ -53,9 +53,18 @@ class InputDPAController extends Controller
             ];
         });
 
+        $programList = $data
+            ->pluck('subKegiatan.kegiatan.program')
+            ->unique('kode')
+            ->values()
+            ->map(fn($program) => [
+                'kode' => $program->kode,
+                'nama' => $program->nama,
+            ]);
 
         return Inertia::render('InputDPA', [
             'data' => $rows,
+            'programList' => $programList,
         ]);
     }
 }

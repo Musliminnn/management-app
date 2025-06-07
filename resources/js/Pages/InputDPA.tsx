@@ -1,28 +1,78 @@
 import CustomButton from '@/Components/CustomButton';
+import { FilterDropdown } from '@/Components/InputDPA/FilterDropdown';
 import { ParentLayout } from '@/Layouts/MainLayout';
-import { Head, usePage } from '@inertiajs/react';
-import { EyeIcon } from 'lucide-react';
-import { useState } from 'react';
+import { usePage } from '@inertiajs/react';
+import { ChevronDown, EyeIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 export default function InputDPA() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
     const page = usePage();
     const data = (page.props as any).data as Record<string, any>[];
+    const programs = (page.props as any).programList as {
+        kode: string;
+        nama: string;
+    }[];
     const columns = data.length > 0 ? Object.keys(data[0]) : [];
     const [visibleColumns, setVisibleColumns] = useState<string[]>(columns);
 
+    useEffect(() => {
+        if (selectedProgram !== null) {
+            console.log('Selected program updated:', selectedProgram);
+        }
+    }, [selectedProgram]);
+
     return (
         <ParentLayout>
-            <div className="max-w-full overflow-x-auto p-6">
-                <Head title="Data Transaksi Belanja" />
-                <CustomButton
-                    variant="shadow"
-                    className="gap-4"
-                    onClick={() => setIsDialogOpen(true)}
-                >
-                    <span>Tampilkan</span>
-                    <EyeIcon className="size-5" />
-                </CustomButton>
+            <div className="max-w-full overflow-x-auto p-1">
+                <div className="mb-10 rounded-lg border-2 border-dotted border-black/25 p-4">
+                    <div className="flex flex-wrap items-center justify-center gap-6">
+                        <CustomButton variant="primary">
+                            Import Anggaran
+                        </CustomButton>
+                        <CustomButton variant="secondary">
+                            Ubah Anggaran
+                        </CustomButton>
+                        <CustomButton variant="outlined">
+                            Geser Anggaran
+                        </CustomButton>
+                    </div>
+                </div>
+                <div className="mb-5 flex flex-wrap gap-4">
+                    <FilterDropdown
+                        model={programs}
+                        placeholder="Pilih Program"
+                        onSelect={(kode) => {
+                            setSelectedProgram(kode);
+                        }}
+                    />
+
+                    <CustomButton
+                        variant="shadow"
+                        className="gap-2"
+                        onClick={() => alert('Button 3 clicked')}
+                    >
+                        <span>Sub Kegiatan</span>
+                        <ChevronDown className="size-5" />
+                    </CustomButton>
+                    <CustomButton
+                        variant="shadow"
+                        className="gap-2"
+                        onClick={() => alert('Button 3 clicked')}
+                    >
+                        <span>Sumber Dana</span>
+                        <ChevronDown className="size-5" />
+                    </CustomButton>
+                    <CustomButton
+                        variant="shadow"
+                        className="gap-4"
+                        onClick={() => setIsDialogOpen(true)}
+                    >
+                        <span>Tampilkan</span>
+                        <EyeIcon className="size-5" />
+                    </CustomButton>
+                </div>
                 {isDialogOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                         <div className="w-full max-w-5xl rounded-lg bg-white p-6 shadow-lg">
