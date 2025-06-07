@@ -1,8 +1,8 @@
+import PrimaryButton from '@/Components/CustomButton';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
-import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import { ParentLayout } from '@/Layouts/MainLayout';
 import { Head, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
@@ -28,7 +28,7 @@ export default function Register({
     };
 
     return (
-        <AuthenticatedLayout>
+        <ParentLayout>
             <Head title="Register" />
             <div className="px-32 py-8">
                 <form onSubmit={submit}>
@@ -142,6 +142,6 @@ export default function Register({
                     </div>
                 </form>
             </div>
-        </AuthenticatedLayout>
+        </ParentLayout>
     );
 }
