@@ -1,5 +1,6 @@
 import CustomButton from '@/Components/CustomButton';
 import { FilterDropdown } from '@/Components/InputDPA/FilterDropdown';
+import UploadDPA from '@/Components/InputDPA/UploadDPA';
 import { ParentLayout } from '@/Layouts/MainLayout';
 import { usePage } from '@inertiajs/react';
 import { EyeIcon } from 'lucide-react';
@@ -42,19 +43,7 @@ export default function InputDPA() {
     return (
         <ParentLayout>
             <div className="max-w-full overflow-x-auto p-1">
-                <div className="mb-10 rounded-lg border-2 border-dotted border-black/25 p-4">
-                    <div className="flex flex-wrap items-center justify-center gap-6">
-                        <CustomButton variant="primary">
-                            Import Anggaran
-                        </CustomButton>
-                        <CustomButton variant="secondary">
-                            Ubah Anggaran
-                        </CustomButton>
-                        <CustomButton variant="outlined">
-                            Geser Anggaran
-                        </CustomButton>
-                    </div>
-                </div>
+                <UploadDPA />
                 <div className="mb-5 flex flex-wrap gap-4">
                     <FilterDropdown
                         model={programs}
@@ -114,7 +103,7 @@ export default function InputDPA() {
                         </CustomButton>
                     )}
                 </div>
-                
+
                 {isDialogOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                         <div className="w-full max-w-5xl rounded-lg bg-white p-6 shadow-lg">
@@ -168,36 +157,47 @@ export default function InputDPA() {
                     </div>
                 )}
 
-                <div className="overflow-x-auto rounded border">
-                    <table className="w-full min-w-[1500px] table-auto border border-gray-300 text-sm">
-                        <thead className="bg-gray-100">
-                            <tr>
-                                {visibleColumns.map((col) => (
-                                    <th
-                                        key={col}
-                                        className="whitespace-nowrap border-b px-3 py-2 text-left"
-                                    >
-                                        {col.replace(/_/g, ' ').toUpperCase()}
-                                    </th>
-                                ))}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {data.map((row, rowIndex) => (
-                                <tr key={rowIndex} className="hover:bg-gray-50">
+                {data.length === 0 ? (
+                    <div className="flex h-40 items-center justify-center rounded border border-dashed border-gray-400 bg-gray-50 text-gray-500">
+                        Silahkan Import Data Anggaran
+                    </div>
+                ) : (
+                    <div className="overflow-x-auto rounded border">
+                        <table className="w-full min-w-[1500px] table-auto border border-gray-300 text-sm">
+                            <thead className="bg-gray-100">
+                                <tr>
                                     {visibleColumns.map((col) => (
-                                        <td
+                                        <th
                                             key={col}
-                                            className="whitespace-nowrap border-b px-3 py-2"
+                                            className="whitespace-nowrap border-b px-3 py-2 text-left"
                                         >
-                                            {row[col] ?? '-'}
-                                        </td>
+                                            {col
+                                                .replace(/_/g, ' ')
+                                                .toUpperCase()}
+                                        </th>
                                     ))}
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
+                            <tbody>
+                                {data.map((row, rowIndex) => (
+                                    <tr
+                                        key={rowIndex}
+                                        className="hover:bg-gray-50"
+                                    >
+                                        {visibleColumns.map((col) => (
+                                            <td
+                                                key={col}
+                                                className="whitespace-nowrap border-b px-3 py-2"
+                                            >
+                                                {row[col] ?? '-'}
+                                            </td>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
         </ParentLayout>
     );

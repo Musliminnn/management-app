@@ -16,7 +16,8 @@ Route::prefix('import')->group(function () {
     Route::post('/file', [ImportController::class, 'import'])->name('import.file');
 });
 
-Route::get('/input-dpa', [InputDPAController::class, 'index'])->name('inputdpa');
+Route::get('/input-dpa', [InputDPAController::class, 'index'])
+->middleware(['auth', 'verified'])->name('inputdpa');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
