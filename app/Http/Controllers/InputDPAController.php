@@ -2,21 +2,38 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\Request;
 use App\Models\TrxBelanja;
 use Inertia\Inertia;
 
 class InputDPAController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $data = TrxBelanja::with([
+        $query = TrxBelanja::with([
             'subKegiatan.kegiatan.program.bidang.urusan',
             'unitSkpd.skpd',
             'akun',
             'standarHarga',
-        ])
-            ->orderBy('id', 'asc')
-            ->paginate(10);
+        ]);
+
+        if ($request->filled('program')) {
+            $query->whereHas('subKegiatan.kegiatan.program', function ($q) use ($request) {
+                $q->where('kode', $request->program);
+            });
+        }
+
+        if ($request->filled('subKegiatan')) {
+            $query->whereHas('subKegiatan', function ($q) use ($request) {
+                $q->where('kode', $request->subKegiatan);
+            });
+        }
+
+        if ($request->filled('sumberDana')) {
+            $query->where('sumber_dana', $request->sumberDana);
+        }
+
+        $data = $query->orderBy('id')->paginate(10)->withQueryString();
 
         $rows = collect($data->items())->map(function ($item) {
             return [
@@ -52,7 +69,11 @@ class InputDPAController extends Controller
             ];
         });
 
-        $programList = $data
+        $allData = TrxBelanja::with([
+            'subKegiatan.kegiatan.program',
+        ])->get();
+
+        $programList = $allData
             ->pluck('subKegiatan.kegiatan.program')
             ->unique('kode')
             ->values()
@@ -61,7 +82,7 @@ class InputDPAController extends Controller
                 'nama' => $program->nama,
             ]);
 
-        $subKegiatanList = $data
+        $subKegiatanList = $allData
             ->pluck('subKegiatan')
             ->filter()
             ->unique('kode')
@@ -71,7 +92,7 @@ class InputDPAController extends Controller
                 'nama' => $sub->nama,
             ]);
 
-        $sumberDanaList = $data
+        $sumberDanaList = $allData
             ->pluck('sumber_dana')
             ->filter()
             ->unique()
@@ -93,6 +114,11 @@ class InputDPAController extends Controller
             'programList' => $programList,
             'subKegiatanList' => $subKegiatanList,
             'sumberDanaList' => $sumberDanaList,
+            'filters' => [
+                'program' => $request->program,
+                'subKegiatan' => $request->subKegiatan,
+                'sumberDana' => $request->sumberDana,
+            ],
         ]);
     }
 }

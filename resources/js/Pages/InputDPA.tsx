@@ -2,12 +2,14 @@ import CustomButton from '@/Components/CustomButton';
 import { FilterDropdown } from '@/Components/InputDPA/FilterDropdown';
 import UploadDPA from '@/Components/InputDPA/UploadDPA';
 import { ParentLayout } from '@/Layouts/MainLayout';
-import { Link, usePage } from '@inertiajs/react';
+import { Link, router, usePage } from '@inertiajs/react';
 import { EyeIcon } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function InputDPA() {
+    const [isLoading, setIsLoading] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+
     const [filters, setFilters] = useState<{
         program: string | null;
         subKegiatan: string | null;
@@ -18,6 +20,8 @@ export default function InputDPA() {
         sumberDana: null,
     });
     const page = usePage();
+    const props = usePage().props as any;
+    const filterKey = `${props.filters.program ?? ''}-${props.filters.subKegiatan ?? ''}-${props.filters.sumberDana ?? ''}`;
     const data = (page.props as any).data as Record<string, any>[];
     const pagination = (page.props as any).pagination;
     const programs = (page.props as any).programList as {
@@ -41,69 +45,107 @@ export default function InputDPA() {
         filters.subKegiatan !== null ||
         filters.sumberDana !== null;
 
+    const handleFilterChange = (
+        key: keyof typeof filters,
+        value: string | null,
+    ) => {
+        const newFilters = {
+            ...filters,
+            [key]: value,
+        };
+        setFilters(newFilters);
+        setIsLoading(true);
+
+        router.get(
+            route('inputdpa'),
+            { ...newFilters, page: 1 },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onFinish: () => setIsLoading(false),
+            },
+        );
+    };
+
+    const resetAllFilters = () => {
+        const resetFilters = {
+            program: null,
+            subKegiatan: null,
+            sumberDana: null,
+        };
+
+        setFilters(resetFilters);
+        setIsLoading(true);
+
+        router.get(
+            route('inputdpa'),
+            { ...resetFilters, page: 1 },
+            {
+                preserveScroll: true,
+                preserveState: true,
+                onFinish: () => setIsLoading(false),
+            },
+        );
+    };
+
+    useEffect(() => {
+        const initialFilters = (page.props as any).filters;
+        setFilters(initialFilters);
+    }, [page.props]);
+
     return (
-        <ParentLayout>
+        <ParentLayout key={filterKey}>
             <div className="max-w-full overflow-x-auto p-1">
                 <UploadDPA />
-                <div className="mb-5 flex flex-wrap gap-4">
-                    <FilterDropdown
-                        model={programs}
-                        value={filters.program}
-                        placeholder="Pilih Program"
-                        onSelect={(kode) =>
-                            setFilters((prev) => ({ ...prev, program: kode }))
-                        }
-                    />
-
-                    <FilterDropdown
-                        model={subKegiatanList}
-                        value={filters.subKegiatan}
-                        placeholder="Sub Kegiatan"
-                        onSelect={(kode) =>
-                            setFilters((prev) => ({
-                                ...prev,
-                                subKegiatan: kode,
-                            }))
-                        }
-                    />
-
-                    <FilterDropdown
-                        model={sumberDanaList}
-                        value={filters.sumberDana}
-                        placeholder="Sumber Dana"
-                        onSelect={(kode) =>
-                            setFilters((prev) => ({
-                                ...prev,
-                                sumberDana: kode,
-                            }))
-                        }
-                    />
-
-                    <CustomButton
-                        variant="shadow"
-                        className="gap-4"
-                        onClick={() => setIsDialogOpen(true)}
-                    >
-                        <span>Tampilkan</span>
-                        <EyeIcon className="size-5" />
-                    </CustomButton>
-
-                    {hasActiveFilter && (
-                        <CustomButton
-                            variant="outlined"
-                            className="border border-red-400 text-red-600"
-                            onClick={() =>
-                                setFilters({
-                                    program: null,
-                                    subKegiatan: null,
-                                    sumberDana: null,
-                                })
+                {data.length !== 0 && (
+                    <div className="mb-5 flex flex-wrap gap-4">
+                        <FilterDropdown
+                            model={programs}
+                            value={filters.program}
+                            placeholder="Pilih Program"
+                            onSelect={(kode) =>
+                                handleFilterChange('program', kode)
                             }
+                        />
+
+                        <FilterDropdown
+                            model={subKegiatanList}
+                            value={filters.subKegiatan}
+                            placeholder="Sub Kegiatan"
+                            onSelect={(kode) =>
+                                handleFilterChange('subKegiatan', kode)
+                            }
+                        />
+
+                        <FilterDropdown
+                            model={sumberDanaList}
+                            value={filters.sumberDana}
+                            placeholder="Sumber Dana"
+                            onSelect={(kode) =>
+                                handleFilterChange('sumberDana', kode)
+                            }
+                        />
+
+                        <CustomButton
+                            variant="shadow"
+                            className="gap-4"
+                            onClick={() => setIsDialogOpen(true)}
                         >
-                            Reset Filter
+                            <span>Tampilkan</span>
+                            <EyeIcon className="size-5" />
                         </CustomButton>
-                    )}
-                </div>
+
+                        {hasActiveFilter && (
+                            <CustomButton
+                                variant="outlined"
+                                className="border border-red-400 text-red-600"
+                                onClick={resetAllFilters}
+                            >
+                                Reset Filter
+                            </CustomButton>
+                        )}
+                    </div>
+                )}
 
                 {isDialogOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
@@ -201,22 +243,30 @@ export default function InputDPA() {
                 )}
                 {data.length !== 0 && (
                     <div className="mt-4 flex justify-center gap-2">
-                        {pagination.links.map((link: any, i: number) => (
-                            <Link
-                                key={i}
-                                href={link.url ?? '#'}
-                                preserveScroll
-                                preserveState
-                                className={`rounded border px-3 py-1 text-sm ${
-                                    link.active
-                                        ? 'bg-main text-white'
-                                        : link.url
-                                          ? 'bg-white text-gray-700 hover:bg-gray-100'
-                                          : 'cursor-not-allowed bg-gray-100 text-gray-400'
-                                }`}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
+                        {pagination.links.map((link: any, i: number) => {
+                            const url = link.url
+                                ? `${link.url}&program=${filters.program ?? ''}&subKegiatan=${filters.subKegiatan ?? ''}&sumberDana=${filters.sumberDana ?? ''}`
+                                : '#';
+
+                            return (
+                                <Link
+                                    key={i}
+                                    href={url}
+                                    preserveScroll
+                                    preserveState
+                                    className={`rounded border px-3 py-1 text-sm ${
+                                        link.active
+                                            ? 'bg-main text-white'
+                                            : link.url
+                                              ? 'bg-white text-gray-700 hover:bg-gray-100'
+                                              : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                    }`}
+                                    dangerouslySetInnerHTML={{
+                                        __html: link.label,
+                                    }}
+                                />
+                            );
+                        })}
                     </div>
                 )}
             </div>
