@@ -16,10 +16,9 @@ class InputDPAController extends Controller
             'standarHarga',
         ])
             ->orderBy('id', 'asc')
-            ->take(100)
-            ->get();
+            ->paginate(10);
 
-        $rows = $data->map(function ($item) {
+        $rows = collect($data->items())->map(function ($item) {
             return [
                 'kode_urusan'         => $item->subKegiatan->kegiatan->program->bidang->urusan->kode ?? null,
                 'nama_urusan'         => $item->subKegiatan->kegiatan->program->bidang->urusan->nama ?? null,
@@ -84,6 +83,13 @@ class InputDPAController extends Controller
 
         return Inertia::render('InputDPA', [
             'data' => $rows,
+            'pagination' => [
+                'current_page' => $data->currentPage(),
+                'last_page' => $data->lastPage(),
+                'per_page' => $data->perPage(),
+                'total' => $data->total(),
+                'links' => $data->linkCollection(),
+            ],
             'programList' => $programList,
             'subKegiatanList' => $subKegiatanList,
             'sumberDanaList' => $sumberDanaList,

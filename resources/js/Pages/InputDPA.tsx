@@ -2,7 +2,7 @@ import CustomButton from '@/Components/CustomButton';
 import { FilterDropdown } from '@/Components/InputDPA/FilterDropdown';
 import UploadDPA from '@/Components/InputDPA/UploadDPA';
 import { ParentLayout } from '@/Layouts/MainLayout';
-import { usePage } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { EyeIcon } from 'lucide-react';
 import { useState } from 'react';
 
@@ -19,6 +19,7 @@ export default function InputDPA() {
     });
     const page = usePage();
     const data = (page.props as any).data as Record<string, any>[];
+    const pagination = (page.props as any).pagination;
     const programs = (page.props as any).programList as {
         kode: string;
         nama: string;
@@ -196,6 +197,26 @@ export default function InputDPA() {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                )}
+                {data.length !== 0 && (
+                    <div className="mt-4 flex justify-center gap-2">
+                        {pagination.links.map((link: any, i: number) => (
+                            <Link
+                                key={i}
+                                href={link.url ?? '#'}
+                                preserveScroll
+                                preserveState
+                                className={`rounded border px-3 py-1 text-sm ${
+                                    link.active
+                                        ? 'bg-main text-white'
+                                        : link.url
+                                          ? 'bg-white text-gray-700 hover:bg-gray-100'
+                                          : 'cursor-not-allowed bg-gray-100 text-gray-400'
+                                }`}
+                                dangerouslySetInnerHTML={{ __html: link.label }}
+                            />
+                        ))}
                     </div>
                 )}
             </div>

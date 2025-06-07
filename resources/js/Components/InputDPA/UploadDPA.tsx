@@ -99,8 +99,8 @@ export default function UploadDPA() {
                                 }`}
                             >
                                 {processing
-                                    ? 'Mengupload...'
-                                    : 'Import Sekarang'}
+                                    ? 'Proses Import...'
+                                    : 'Import'}
                             </button>
                         </form>
                     </div>
