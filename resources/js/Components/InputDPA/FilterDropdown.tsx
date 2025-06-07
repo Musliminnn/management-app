@@ -1,7 +1,7 @@
 import CustomButton from '@/Components/CustomButton';
 import Dropdown from '@/Components/Dropdown';
 import { ChevronDown } from 'lucide-react';
-import {  useState } from 'react';
+import { useState } from 'react';
 
 type ModelType = {
     kode: string;
@@ -10,10 +10,12 @@ type ModelType = {
 
 export function FilterDropdown({
     model,
+    value,
     placeholder = 'Pilih Item',
     onSelect,
 }: {
     model: ModelType[];
+    value: string | null;
     placeholder?: string;
     onSelect?: (kode: string | null) => void;
 }) {
@@ -25,8 +27,9 @@ export function FilterDropdown({
         if (onSelect) onSelect(nextValue);
     };
 
-    const selectedName =
-        selectedKode && model.find((item) => item.kode === selectedKode)?.nama;
+    const selectedName = value
+        ? model.find((p) => p.kode === value)?.nama
+        : placeholder;
 
     return (
         <Dropdown>

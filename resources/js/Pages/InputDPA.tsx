@@ -3,15 +3,19 @@ import { FilterDropdown } from '@/Components/InputDPA/FilterDropdown';
 import { ParentLayout } from '@/Layouts/MainLayout';
 import { usePage } from '@inertiajs/react';
 import { EyeIcon } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 export default function InputDPA() {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [selectedProgram, setSelectedProgram] = useState<string | null>(null);
-    const [selectedSubKeg, setSelectedSubKeg] = useState<string | null>(null);
-    const [selectedSumberDana, setSelectedSumberDana] = useState<string | null>(
-        null,
-    );
+    const [filters, setFilters] = useState<{
+        program: string | null;
+        subKegiatan: string | null;
+        sumberDana: string | null;
+    }>({
+        program: null,
+        subKegiatan: null,
+        sumberDana: null,
+    });
     const page = usePage();
     const data = (page.props as any).data as Record<string, any>[];
     const programs = (page.props as any).programList as {
@@ -30,11 +34,10 @@ export default function InputDPA() {
     const columns = data.length > 0 ? Object.keys(data[0]) : [];
     const [visibleColumns, setVisibleColumns] = useState<string[]>(columns);
 
-    useEffect(() => {
-        if (selectedProgram !== null) {
-            console.log('Selected program updated:', selectedProgram);
-        }
-    }, [selectedProgram]);
+    const hasActiveFilter =
+        filters.program !== null ||
+        filters.subKegiatan !== null ||
+        filters.sumberDana !== null;
 
     return (
         <ParentLayout>
@@ -55,27 +58,35 @@ export default function InputDPA() {
                 <div className="mb-5 flex flex-wrap gap-4">
                     <FilterDropdown
                         model={programs}
+                        value={filters.program}
                         placeholder="Pilih Program"
-                        onSelect={(kode) => {
-                            setSelectedProgram(kode);
-                        }}
+                        onSelect={(kode) =>
+                            setFilters((prev) => ({ ...prev, program: kode }))
+                        }
                     />
 
                     <FilterDropdown
                         model={subKegiatanList}
+                        value={filters.subKegiatan}
                         placeholder="Sub Kegiatan"
-                        onSelect={(kode) => {
-                            setSelectedSubKeg(kode);
-                        }}
+                        onSelect={(kode) =>
+                            setFilters((prev) => ({
+                                ...prev,
+                                subKegiatan: kode,
+                            }))
+                        }
                     />
 
                     <FilterDropdown
                         model={sumberDanaList}
+                        value={filters.sumberDana}
                         placeholder="Sumber Dana"
-                        onSelect={(kode) => {
-                            setSelectedSumberDana(kode);
-                            console.log('Selected Sumber Dana:', kode);
-                        }}
+                        onSelect={(kode) =>
+                            setFilters((prev) => ({
+                                ...prev,
+                                sumberDana: kode,
+                            }))
+                        }
                     />
 
                     <CustomButton
@@ -86,7 +97,24 @@ export default function InputDPA() {
                         <span>Tampilkan</span>
                         <EyeIcon className="size-5" />
                     </CustomButton>
+
+                    {hasActiveFilter && (
+                        <CustomButton
+                            variant="outlined"
+                            className="border border-red-400 text-red-600"
+                            onClick={() =>
+                                setFilters({
+                                    program: null,
+                                    subKegiatan: null,
+                                    sumberDana: null,
+                                })
+                            }
+                        >
+                            Reset Filter
+                        </CustomButton>
+                    )}
                 </div>
+                
                 {isDialogOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
                         <div className="w-full max-w-5xl rounded-lg bg-white p-6 shadow-lg">
