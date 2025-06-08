@@ -1,6 +1,7 @@
 import Dropdown from '@/Components/Dropdown';
 import { usePage } from '@inertiajs/react';
 import { Menu } from 'lucide-react';
+import ApplicationLogo from '../Components/ApplicationLogo';
 
 interface AppbarProps {
     onToggleSidebar?: () => void;
@@ -12,7 +13,7 @@ export const Appbar = ({ onToggleSidebar }: AppbarProps) => {
     const user = auth?.user;
     return (
         <header className="flex h-16 w-full items-center justify-between bg-white px-4 shadow">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-5">
                 {onToggleSidebar && (
                     <button
                         className="rounded p-2 hover:bg-gray-100 md:hidden"
@@ -21,9 +22,10 @@ export const Appbar = ({ onToggleSidebar }: AppbarProps) => {
                         <Menu size={20} />
                     </button>
                 )}
-                <span className="text-lg font-semibold text-gray-800">
-                    My Application
-                </span>
+                <ApplicationLogo className="h-10" />
+                <h2 className="text-lg font-bold text-custom-black">
+                    Sistem Manajemen Anggaran Dinas Kesehatan
+                </h2>
             </div>
 
             <div className="hidden sm:ms-6 sm:flex sm:items-center">
