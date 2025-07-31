@@ -45,6 +45,33 @@ make ps
 - **MySQL**: localhost:3306 (user: root, password: root)
 - **Redis**: localhost:6379
 
+## 🔧 Important Notes
+
+### ✅ No Manual Commands Needed!
+
+**Laravel development server automatically starts** when you run `make up`. You don't need to run:
+
+- ❌ `php artisan serve` (already running in container)
+- ❌ `npm run dev` (assets built during setup)
+
+The app container now automatically runs `php artisan serve --host=0.0.0.0 --port=8000` on startup.
+
+### First Time Setup
+
+If this is your first time running the project:
+
+```bash
+make setup    # Complete setup: dependencies + migrations + assets
+```
+
+### Development Commands
+
+```bash
+make init     # Install dependencies & build assets only
+make dev      # Start development with asset watching
+make serve    # Start Laravel dev server manually (if needed)
+```
+
 ## 📋 Available Commands
 
 ### Docker Management

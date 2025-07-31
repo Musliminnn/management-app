@@ -11,7 +11,32 @@ help: ## Show this help message
 	@echo "$(YELLOW)=====================$(RESET)"
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  $(GREEN)%-15s$(RESET) %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-# Docker Commands
+# Setup Commands
+init: ## Initial setup - install dependencies and build assets
+	@echo "$(GREEN)Running initial setup...$(RESET)"
+	@echo "$(YELLOW)Installing composer dependencies...$(RESET)"
+	docker-compose exec app composer install
+	@echo "$(YELLOW)Installing npm dependencies...$(RESET)"
+	docker-compose exec app npm install
+	@echo "$(YELLOW)Building assets...$(RESET)"
+	docker-compose exec app npm run build
+	@echo "$(YELLOW)Clearing caches...$(RESET)"
+	docker-compose exec app php artisan cache:clear
+	@echo "$(GREEN)Setup completed!$(RESET)"
+
+serve: ## Start Laravel development server manually
+	@echo "$(GREEN)Starting Laravel development server...$(RESET)"
+	docker-compose exec app php artisan serve --host=0.0.0.0 --port=8000
+
+dev: ## Start development environment with asset watching
+	@echo "$(GREEN)Starting development environment...$(RESET)"
+	@echo "$(YELLOW)Building assets first...$(RESET)"
+	docker-compose exec app npm run build
+	@echo "$(YELLOW)Starting asset watching in background...$(RESET)"
+	docker-compose exec -d app npm run dev -- --watch
+	@echo "$(GREEN)Development environment ready!$(RESET)"
+
+# Docker Management
 up: ## Start all services
 	@echo "$(GREEN)Starting Docker services...$(RESET)"
 	docker-compose up -d
