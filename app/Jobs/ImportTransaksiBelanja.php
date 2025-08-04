@@ -16,15 +16,21 @@ class ImportTransaksiBelanja implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public string $path;
+    public string $importId;
 
-    public function __construct(string $path)
+    public function __construct(string $path, string $importId = null)
     {
         $this->path = $path;
+        $this->importId = $importId ?? uniqid('import_');
     }
 
     public function handle(): void
     {
-        Log::info('Menjalankan ImportTransaksiBelanja', ['path' => $this->path]);
-        Excel::queueImport(new TransaksiBelanjaImport, $this->path);
+        Log::info('Menjalankan ImportTransaksiBelanja', [
+            'path' => $this->path,
+            'import_id' => $this->importId
+        ]);
+
+        Excel::queueImport(new TransaksiBelanjaImport($this->importId), $this->path);
     }
 }

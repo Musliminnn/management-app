@@ -3,7 +3,9 @@
 namespace App\Imports;
 
 use App\Models\TrxBelanja;
+use App\Services\ImportOptimizationService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
@@ -13,7 +15,16 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 class TransaksiBelanjaImport implements OnEachRow, WithHeadingRow, WithChunkReading, ShouldQueue
 {
     protected array $batch = [];
-    protected int $batchSize = 100;
+    protected int $batchSize;
+    protected string $importId;
+
+    public function __construct(string $importId = null)
+    {
+        $this->importId = $importId ?? uniqid('import_');
+
+        // Dynamic batch size based on memory
+        $this->batchSize = min(500, max(50, ImportOptimizationService::getDynamicChunkSize() / 2));
+    }
 
     public function onRow(Row $row): void
     {
@@ -57,11 +68,17 @@ class TransaksiBelanjaImport implements OnEachRow, WithHeadingRow, WithChunkRead
     protected function insertBatch(): void
     {
         try {
-            TrxBelanja::insert($this->batch);
+            // Use transaction for better performance and data integrity
+            DB::transaction(function () {
+                TrxBelanja::insert($this->batch);
+            });
+
+            Log::info('Batch transaksi berhasil diinsert', ['count' => count($this->batch)]);
         } catch (\Throwable $e) {
             Log::error('Gagal insert batch trx_belanja', [
                 'error' => $e->getMessage(),
-                'rows' => $this->batch,
+                'count' => count($this->batch),
+                'first_row' => $this->batch[0] ?? null,
             ]);
         }
 
@@ -70,7 +87,7 @@ class TransaksiBelanjaImport implements OnEachRow, WithHeadingRow, WithChunkRead
 
     public function chunkSize(): int
     {
-        return 500; // Lebih besar karena kita pakai bulk insert
+        return ImportOptimizationService::getDynamicChunkSize();
     }
 
     public function __destruct()

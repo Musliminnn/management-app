@@ -11,7 +11,9 @@ use App\Models\RefSkpd;
 use App\Models\RefUnitSkpd;
 use App\Models\RefAkun;
 use App\Models\RefStandarHarga;
+use App\Services\ImportOptimizationService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 use Maatwebsite\Excel\Row;
 use Maatwebsite\Excel\Concerns\OnEachRow;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
@@ -33,6 +35,31 @@ class MasterDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, S
         'standar_harga' => [],
     ];
 
+    // Cache Redis untuk validasi
+    protected array $redisCache = [];
+    protected string $importId;
+
+    public function __construct(string $importId = null)
+    {
+        $this->importId = $importId ?? uniqid('import_');
+
+        // Preload reference data into cache
+        ImportOptimizationService::preloadReferenceData();
+
+        // Load Redis cache
+        $this->redisCache = [
+            'urusan' => Cache::get('ref_urusan_codes', []),
+            'bidang' => Cache::get('ref_bidang_codes', []),
+            'program' => Cache::get('ref_program_codes', []),
+            'kegiatan' => Cache::get('ref_kegiatan_codes', []),
+            'sub_kegiatan' => Cache::get('ref_sub_kegiatan_codes', []),
+            'skpd' => Cache::get('ref_skpd_codes', []),
+            'unit_skpd' => Cache::get('ref_unit_skpd_codes', []),
+            'akun' => Cache::get('ref_akun_codes', []),
+            'standar_harga' => Cache::get('ref_standar_harga_codes', []),
+        ];
+    }
+
     public function onRow(Row $row): void
     {
         $r = array_map('trim', $row->toArray()); // Normalisasi: trim semua value
@@ -49,12 +76,17 @@ class MasterDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, S
             }
 
             // === RefUrusan ===
-            if (!isset($this->cache['urusan'][$r['kode_urusan']])) {
+            if (
+                !isset($this->cache['urusan'][$r['kode_urusan']]) &&
+                !isset($this->redisCache['urusan'][$r['kode_urusan']])
+            ) {
                 RefUrusan::firstOrCreate(
                     ['kode' => $r['kode_urusan']],
                     ['nama' => $r['nama_urusan'] ?? '']
                 );
                 $this->cache['urusan'][$r['kode_urusan']] = true;
+                // Update Redis cache
+                Cache::put('ref_urusan_codes', array_merge($this->redisCache['urusan'], [$r['kode_urusan'] => $r['nama_urusan'] ?? '']), 3600);
             }
 
             // === RefBidang ===
@@ -143,7 +175,6 @@ class MasterDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, S
                 );
                 $this->cache['standar_harga'][$r['kode_standar_harga']] = true;
             }
-
         } catch (\Throwable $e) {
             Log::error('Gagal parsing row MasterDataImport', [
                 'message' => $e->getMessage(),
@@ -154,6 +185,6 @@ class MasterDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, S
 
     public function chunkSize(): int
     {
-        return 250; // Bisa disesuaikan dengan RAM server
+        return ImportOptimizationService::getDynamicChunkSize();
     }
 }
