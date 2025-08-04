@@ -143,6 +143,7 @@ export default function InputDPA() {
                             onSelect={(kode) =>
                                 handleFilterChange('sumberDana', kode)
                             }
+                            isWithCode={false}
                         />
 
                         <CustomButton

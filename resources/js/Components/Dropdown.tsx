@@ -89,7 +89,6 @@ const Content = ({
             >
                 <div
                     className={`absolute z-50 mt-2 rounded-md shadow-lg ${alignmentClasses} ${widthClasses}`}
-                    onClick={() => setOpen(false)}
                 >
                     <div
                         className={
@@ -110,7 +109,9 @@ const DropdownLink = ({
     children,
     onClick,
     ...props
-}: InertiaLinkProps & { onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void }) => {
+}: InertiaLinkProps & {
+    onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
+}) => {
     const { setOpen } = useContext(DropDownContext);
 
     return (
