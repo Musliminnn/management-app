@@ -3,7 +3,7 @@ import { FilterDropdown } from '@/Components/InputDPA/FilterDropdown';
 import UploadDPA from '@/Components/InputDPA/UploadDPA';
 import { ParentLayout } from '@/Layouts/MainLayout';
 import { Link, router, usePage } from '@inertiajs/react';
-import { EyeIcon } from 'lucide-react';
+import { Download, EyeIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function InputDPA() {
@@ -86,6 +86,20 @@ export default function InputDPA() {
         );
     };
 
+    const handleExport = () => {
+        setIsLoading(true);
+
+        const params = new URLSearchParams();
+        visibleColumns.forEach((col) => {
+            params.append('visibleColumns[]', col);
+        });
+
+        const url = `${route('inputdpa.export')}?${params.toString()}`;
+        window.open(url, '_blank');
+
+        setTimeout(() => setIsLoading(false), 1000);
+    };
+
     const onPageChange = (pageUrl: string) => {
         const urlObj = new URL(pageUrl);
         const page = urlObj.searchParams.get('page');
@@ -148,11 +162,23 @@ export default function InputDPA() {
 
                         <CustomButton
                             variant="shadow"
-                            className="gap-4"
+                            className="flex items-center justify-center gap-2"
                             onClick={() => setIsDialogOpen(true)}
                         >
                             <span>Tampilkan</span>
-                            <EyeIcon className="size-5" />
+                            <EyeIcon className="size-4" />
+                        </CustomButton>
+
+                        <CustomButton
+                            variant="primary"
+                            className="flex items-center justify-center gap-2"
+                            onClick={handleExport}
+                            disabled={visibleColumns.length === 0 || isLoading}
+                        >
+                            <span>
+                                {isLoading ? 'Mengunduh...' : 'Export CSV'}
+                            </span>
+                            <Download className="size-4" />
                         </CustomButton>
 
                         {hasActiveFilter && (
@@ -174,23 +200,41 @@ export default function InputDPA() {
                                 <h2 className="text-lg font-bold">
                                     Filter Tampilkan
                                 </h2>
-                                <button
-                                    onClick={() => setIsDialogOpen(false)}
-                                    className="text-gray-500 hover:text-gray-700"
-                                >
-                                    ✕
-                                </button>
+                                <div className="flex items-center gap-2">
+                                    <CustomButton
+                                        variant="outlined"
+                                        className="text-sm"
+                                        onClick={() =>
+                                            setVisibleColumns(columns)
+                                        }
+                                    >
+                                        Pilih Semua
+                                    </CustomButton>
+                                    <CustomButton
+                                        variant="outlined"
+                                        className="text-sm"
+                                        onClick={() => setVisibleColumns([])}
+                                    >
+                                        Hapus Semua
+                                    </CustomButton>
+                                    <button
+                                        onClick={() => setIsDialogOpen(false)}
+                                        className="text-gray-500 hover:text-gray-700"
+                                    >
+                                        ✕
+                                    </button>
+                                </div>
                             </div>
-                            <div className="mb-4 flex max-w-full flex-wrap gap-4">
+                            <div className="mb-4 grid max-w-full grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
                                 {columns.map((col) => (
                                     <CustomButton
                                         key={col}
                                         variant={
                                             visibleColumns.includes(col)
                                                 ? 'secondary'
-                                                : 'shadow'
+                                                : 'outlined'
                                         }
-                                        className="text-sm"
+                                        className="flex items-center justify-center text-xs"
                                         onClick={() => {
                                             const isVisible =
                                                 visibleColumns.includes(col);
@@ -212,9 +256,29 @@ export default function InputDPA() {
                                             }
                                         }}
                                     >
-                                        {col.replace(/_/g, ' ').toUpperCase()}
+                                        <span>
+                                            {col
+                                                .replace(/_/g, ' ')
+                                                .toUpperCase()}
+                                        </span>
                                     </CustomButton>
                                 ))}
+                            </div>
+                            <div className="flex justify-end gap-2">
+                                <CustomButton
+                                    variant="outlined"
+                                    onClick={() => setIsDialogOpen(false)}
+                                >
+                                    Tutup
+                                </CustomButton>
+                                <CustomButton
+                                    variant="primary"
+                                    onClick={() => {
+                                        setIsDialogOpen(false);
+                                    }}
+                                >
+                                    Simpan
+                                </CustomButton>
                             </div>
                         </div>
                     </div>
