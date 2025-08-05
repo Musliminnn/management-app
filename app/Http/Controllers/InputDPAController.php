@@ -99,6 +99,9 @@ class InputDPAController extends Controller
         // Get filter options based on current selections
         $filterOptions = $this->getFilterOptions($filters);
 
+        // Calculate grand total from all filtered data (not just current page)
+        $grandTotal = $this->calculateGrandTotal($filters);
+
         return Inertia::render('InputDPA', [
             'data' => $rows,
             'pagination' => [
@@ -108,6 +111,7 @@ class InputDPAController extends Controller
                 'total' => $data->total(),
                 'links' => $data->linkCollection(),
             ],
+            'grandTotal' => $grandTotal,
             'cascadingFilters' => $filters,
             'programList' => $filterOptions['programList'],
             'kegiatanList' => $filterOptions['kegiatanList'],
@@ -116,6 +120,48 @@ class InputDPAController extends Controller
             'unitSkpdList' => $filterOptions['unitSkpdList'],
             'sumberDanaList' => $filterOptions['sumberDanaList'],
         ]);
+    }
+
+    private function calculateGrandTotal($filters)
+    {
+        $grandTotalQuery = TrxBelanja::query();
+
+        // Apply same filters for grand total calculation
+        if ($filters['program']) {
+            $grandTotalQuery->whereHas('subKegiatan.kegiatan.program', function ($q) use ($filters) {
+                $q->where('kode', $filters['program']);
+            });
+        }
+
+        if ($filters['kegiatan']) {
+            $grandTotalQuery->whereHas('subKegiatan.kegiatan', function ($q) use ($filters) {
+                $q->where('kode', $filters['kegiatan']);
+            });
+        }
+
+        if ($filters['subKegiatan']) {
+            $grandTotalQuery->whereHas('subKegiatan', function ($q) use ($filters) {
+                $q->where('kode', $filters['subKegiatan']);
+            });
+        }
+
+        if ($filters['skpd']) {
+            $grandTotalQuery->whereHas('unitSkpd.skpd', function ($q) use ($filters) {
+                $q->where('kode', $filters['skpd']);
+            });
+        }
+
+        if ($filters['unitSkpd']) {
+            $grandTotalQuery->whereHas('unitSkpd', function ($q) use ($filters) {
+                $q->where('kode', $filters['unitSkpd']);
+            });
+        }
+
+        if ($filters['sumberDana']) {
+            $grandTotalQuery->where('sumber_dana', $filters['sumberDana']);
+        }
+
+        return $grandTotalQuery->sum('total_harga');
     }
 
     private function getFilterOptions($filters)

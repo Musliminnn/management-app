@@ -1,6 +1,7 @@
 import CustomButton from '@/Components/CustomButton';
 import CascadingFilter from '@/Components/InputDPA/CascadingFilter';
 import UploadDPA from '@/Components/InputDPA/UploadDPA';
+import { formatCurrency } from '@/helper/currency';
 import { ParentLayout } from '@/Layouts/MainLayout';
 import { Link, router, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
@@ -8,6 +9,22 @@ import { useEffect, useState } from 'react';
 export default function InputDPA() {
     const [isLoading, setIsLoading] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+    // Function to calculate total harga from all data (not just current page)
+    const calculateTotalHarga = () => {
+        // If backend provides grand total, use it
+        if (props.grandTotal) {
+            return props.grandTotal;
+        }
+
+        // Otherwise, calculate from current page data (fallback)
+        return data.reduce((total, row) => {
+            const totalHarga = parseFloat(
+                row.total_harga || row['total harga'] || 0,
+            );
+            return total + (isNaN(totalHarga) ? 0 : totalHarga);
+        }, 0);
+    };
 
     // Legacy filters (for backward compatibility)
     const [filters, setFilters] = useState<{
@@ -247,41 +264,86 @@ export default function InputDPA() {
                         Silahkan Import Data Anggaran
                     </div>
                 ) : (
-                    <div className="overflow-x-auto rounded border">
-                        <table className="w-full min-w-[1500px] table-auto border border-gray-300 text-sm">
-                            <thead className="bg-gray-100">
-                                <tr>
-                                    {visibleColumns.map((col) => (
-                                        <th
-                                            key={col}
-                                            className="whitespace-nowrap border-b px-3 py-2 text-left"
-                                        >
-                                            {col
-                                                .replace(/_/g, ' ')
-                                                .toUpperCase()}
-                                        </th>
-                                    ))}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {data.map((row, rowIndex) => (
-                                    <tr
-                                        key={rowIndex}
-                                        className="hover:bg-gray-50"
-                                    >
+                    <>
+                        <div className="overflow-x-auto rounded border">
+                            <table className="w-full min-w-[1500px] table-auto border border-gray-300 text-sm">
+                                <thead className="bg-gray-100">
+                                    <tr>
                                         {visibleColumns.map((col) => (
-                                            <td
+                                            <th
                                                 key={col}
-                                                className="whitespace-nowrap border-b px-3 py-2"
+                                                className="whitespace-nowrap border-b px-3 py-2 text-center"
                                             >
-                                                {row[col] ?? '-'}
-                                            </td>
+                                                {col
+                                                    .replace(/_/g, ' ')
+                                                    .toUpperCase()}
+                                            </th>
                                         ))}
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {data.map((row, rowIndex) => (
+                                        <tr
+                                            key={rowIndex}
+                                            className="hover:bg-gray-50"
+                                        >
+                                            {visibleColumns.map((col) => {
+                                                let cellValue = row[col] ?? '-';
+
+                                                // Format currency for price columns
+                                                if (
+                                                    col
+                                                        .toLowerCase()
+                                                        .includes('harga') ||
+                                                    col
+                                                        .toLowerCase()
+                                                        .includes('satuan') ||
+                                                    col
+                                                        .toLowerCase()
+                                                        .includes('total')
+                                                ) {
+                                                    if (
+                                                        typeof cellValue ===
+                                                            'number' ||
+                                                        (typeof cellValue ===
+                                                            'string' &&
+                                                            !isNaN(
+                                                                parseFloat(
+                                                                    cellValue,
+                                                                ),
+                                                            ))
+                                                    ) {
+                                                        cellValue =
+                                                            formatCurrency(
+                                                                cellValue,
+                                                            );
+                                                    }
+                                                }
+
+                                                return (
+                                                    <td
+                                                        key={col}
+                                                        className="whitespace-nowrap border-b px-3 py-2 text-center"
+                                                    >
+                                                        {cellValue}
+                                                    </td>
+                                                );
+                                            })}
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div className="mt-1 flex justify-end">
+                            <div className="rounded border bg-main/10 px-3 py-2 shadow-sm">
+                                <div className="text-sm font-semibold text-main">
+                                    Jumlah Total Harga: Rp{' '}
+                                    {formatCurrency(calculateTotalHarga())}
+                                </div>
+                            </div>
+                        </div>
+                    </>
                 )}
                 {data.length !== 0 && (
                     <div className="mt-4 flex justify-center gap-2">
