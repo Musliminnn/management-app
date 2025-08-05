@@ -1,6 +1,7 @@
 import CustomButton from '@/Components/CustomButton';
 import { FilterDropdown } from '@/Components/InputDPA/FilterDropdown';
 import { router } from '@inertiajs/react';
+import { Download, EyeIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 type FilterData = {
@@ -25,6 +26,10 @@ type Props = {
     skpdList: FilterData[];
     unitSkpdList: FilterData[];
     sumberDanaList: FilterData[];
+    visibleColumns: string[];
+    isLoading: boolean;
+    onShowDialog: () => void;
+    onExport: () => void;
 };
 
 export default function CascadingFilter({
@@ -35,8 +40,11 @@ export default function CascadingFilter({
     skpdList,
     unitSkpdList,
     sumberDanaList,
+    visibleColumns,
+    isLoading,
+    onShowDialog,
+    onExport,
 }: Props) {
-    const [isLoading, setIsLoading] = useState(false);
     const [filters, setFilters] = useState<CascadingFilters>(initialFilters);
 
     // Update local state when initialFilters change
@@ -48,8 +56,6 @@ export default function CascadingFilter({
         key: keyof CascadingFilters,
         value: string | null,
     ) => {
-        setIsLoading(true);
-
         // Reset dependent filters when parent filter changes
         let newFilters = { ...filters, [key]: value };
 
@@ -79,14 +85,10 @@ export default function CascadingFilter({
             preserveScroll: true,
             preserveState: false,
             replace: true,
-            onFinish: () => {
-                setIsLoading(false);
-            },
         });
     };
 
     const resetAllFilters = () => {
-        setIsLoading(true);
         const resetFilters: CascadingFilters = {
             program: null,
             kegiatan: null,
@@ -105,17 +107,15 @@ export default function CascadingFilter({
                 preserveScroll: true,
                 preserveState: false,
                 replace: true,
-                onFinish: () => setIsLoading(false),
             },
         );
     };
-
     const hasActiveFilter = Object.values(filters).some(
         (value) => value !== null,
     );
 
     return (
-        <div className="mb-5 flex flex-wrap gap-4">
+        <div className="flex flex-wrap gap-4">
             {/* Program Filter - now independent (top level) */}
             <FilterDropdown
                 model={programList}
@@ -184,7 +184,6 @@ export default function CascadingFilter({
             </div>
 
             {/* Sumber Dana Filter - independent */}
-
             <FilterDropdown
                 model={sumberDanaList}
                 value={filters.sumberDana}
@@ -192,6 +191,26 @@ export default function CascadingFilter({
                 onSelect={(kode) => handleFilterChange('sumberDana', kode)}
                 isWithCode={false}
             />
+
+            {/* Action Buttons */}
+            <CustomButton
+                variant="shadow"
+                className="flex items-center justify-center gap-2"
+                onClick={onShowDialog}
+            >
+                <span>Tampilkan</span>
+                <EyeIcon className="size-4" />
+            </CustomButton>
+
+            <CustomButton
+                variant="secondary"
+                className="flex items-center justify-center gap-2"
+                onClick={onExport}
+                disabled={visibleColumns.length === 0 || isLoading}
+            >
+                <span>{isLoading ? 'Mengunduh...' : 'Export Excel'}</span>
+                <Download className="size-4" />
+            </CustomButton>
 
             {/* Reset Button */}
             {hasActiveFilter && (

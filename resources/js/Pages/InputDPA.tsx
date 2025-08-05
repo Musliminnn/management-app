@@ -3,7 +3,6 @@ import CascadingFilter from '@/Components/InputDPA/CascadingFilter';
 import UploadDPA from '@/Components/InputDPA/UploadDPA';
 import { ParentLayout } from '@/Layouts/MainLayout';
 import { Link, router, usePage } from '@inertiajs/react';
-import { Download, EyeIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function InputDPA() {
@@ -147,7 +146,7 @@ export default function InputDPA() {
             <div className="max-w-full overflow-x-auto p-1">
                 <UploadDPA />
                 {data.length !== 0 && (
-                    <>
+                    <div className="mb-5">
                         <CascadingFilter
                             initialFilters={cascadingFilters}
                             programList={programList}
@@ -156,33 +155,12 @@ export default function InputDPA() {
                             skpdList={skpdList}
                             unitSkpdList={unitSkpdList}
                             sumberDanaList={sumberDanaList}
+                            visibleColumns={visibleColumns}
+                            isLoading={isLoading}
+                            onShowDialog={() => setIsDialogOpen(true)}
+                            onExport={handleExport}
                         />
-
-                        <div className="mb-5 flex flex-wrap gap-4">
-                            <CustomButton
-                                variant="shadow"
-                                className="flex items-center justify-center gap-2"
-                                onClick={() => setIsDialogOpen(true)}
-                            >
-                                <span>Tampilkan</span>
-                                <EyeIcon className="size-4" />
-                            </CustomButton>
-
-                            <CustomButton
-                                variant="primary"
-                                className="flex items-center justify-center gap-2"
-                                onClick={handleExport}
-                                disabled={
-                                    visibleColumns.length === 0 || isLoading
-                                }
-                            >
-                                <span>
-                                    {isLoading ? 'Mengunduh...' : 'Export CSV'}
-                                </span>
-                                <Download className="size-4" />
-                            </CustomButton>
-                        </div>
-                    </>
+                    </div>
                 )}
 
                 {isDialogOpen && (
@@ -209,12 +187,6 @@ export default function InputDPA() {
                                     >
                                         Hapus Semua
                                     </CustomButton>
-                                    <button
-                                        onClick={() => setIsDialogOpen(false)}
-                                        className="text-gray-500 hover:text-gray-700"
-                                    >
-                                        ✕
-                                    </button>
                                 </div>
                             </div>
                             <div className="mb-4 grid max-w-full grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10">
@@ -257,12 +229,6 @@ export default function InputDPA() {
                                 ))}
                             </div>
                             <div className="flex justify-end gap-2">
-                                <CustomButton
-                                    variant="outlined"
-                                    onClick={() => setIsDialogOpen(false)}
-                                >
-                                    Tutup
-                                </CustomButton>
                                 <CustomButton
                                     variant="primary"
                                     onClick={() => {
