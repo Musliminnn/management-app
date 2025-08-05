@@ -11,6 +11,7 @@ use App\Services\ImportOptimizationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Cache;
+use Inertia\Inertia;
 
 class ImportController extends Controller
 {
@@ -59,61 +60,16 @@ class ImportController extends Controller
                     new ImportTransaksiBelanja($path, $importId),
                 ]);
 
-            return response()->json([
-                'success' => true,
-                'message' => 'File sedang diproses. Transaksi akan dijalankan setelah master selesai.',
-                'import_id' => $importId,
-                'file_info' => [
-                    'name' => $fileName,
-                    'size' => $this->formatFileSize($fileSize),
-                    'chunk_size' => $chunkSize
-                ]
-            ]);
+            // Return to the same page with simple success message
+            return redirect()->back()->with('success', 'File berhasil diunggah dan sedang diproses.');
         } catch (\Throwable $e) {
             Log::error('Gagal import Excel', [
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString()
             ]);
 
-            return response()->json([
-                'success' => false,
-                'message' => 'Gagal mengimpor file: ' . $e->getMessage()
-            ], 500);
+            return redirect()->back()->with('error', 'Gagal mengunggah file: ' . $e->getMessage());
         }
-    }
-
-    /**
-     * Get import progress status
-     */
-    public function getImportStatus(Request $request)
-    {
-        $importId = $request->input('import_id');
-
-        if (!$importId) {
-            return response()->json(['error' => 'Import ID required'], 400);
-        }
-
-        $importLog = ImportLog::where('import_id', $importId)->first();
-        $queueStatus = ImportOptimizationService::getQueueStatus();
-
-        if (!$importLog) {
-            return response()->json(['error' => 'Import session not found'], 404);
-        }
-
-        return response()->json([
-            'import_session' => [
-                'filename' => $importLog->filename,
-                'file_size' => $importLog->file_size,
-                'status' => $importLog->status,
-                'started_at' => $importLog->started_at,
-                'progress' => $importLog->progress_percentage,
-                'processed_rows' => $importLog->processed_rows,
-                'total_rows' => $importLog->total_rows,
-                'failed_rows' => $importLog->failed_rows,
-                'duration' => $importLog->duration
-            ],
-            'queue_status' => $queueStatus
-        ]);
     }
 
     /**

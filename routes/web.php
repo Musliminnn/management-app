@@ -14,7 +14,6 @@ Route::prefix('import')->group(function () {
     })->name('import.file.pages');
 
     Route::post('/file', [ImportController::class, 'import'])->name('import.file');
-    Route::get('/status', [ImportController::class, 'getImportStatus'])->name('import.status');
 });
 
 Route::get('/input-dpa', [InputDPAController::class, 'index'])

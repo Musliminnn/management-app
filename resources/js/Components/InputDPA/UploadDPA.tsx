@@ -1,36 +1,9 @@
 import CustomButton from '@/Components/CustomButton';
 import { useForm } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
-
-interface ImportProgress {
-    import_id: string;
-    import_session: {
-        filename: string;
-        file_size: number;
-        status: string;
-        started_at: string;
-        progress: number;
-    };
-    queue_status: {
-        pending_jobs: number;
-        failed_jobs: number;
-        status: string;
-    };
-}
-
-interface FileInfo {
-    name: string;
-    size: string;
-    chunk_size: number;
-}
+import { useState } from 'react';
 
 export default function UploadDPA() {
     const [isUploadOpen, setIsUploadOpen] = useState(false);
-    const [importProgress, setImportProgress] = useState<ImportProgress | null>(
-        null,
-    );
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [fileInfo, setFileInfo] = useState<FileInfo | null>(null);
     const [dragActive, setDragActive] = useState(false);
 
     const {
@@ -46,46 +19,6 @@ export default function UploadDPA() {
         file: null,
     });
 
-    // Progress monitoring
-    useEffect(() => {
-        let intervalId: NodeJS.Timeout;
-
-        if (importProgress?.import_id && isProcessing) {
-            intervalId = setInterval(async () => {
-                try {
-                    const response = await fetch(
-                        `/import/status?import_id=${importProgress.import_id}`,
-                    );
-                    const data = await response.json();
-
-                    if (response.ok) {
-                        setImportProgress(data);
-
-                        // Stop polling if processing is complete
-                        if (
-                            data.queue_status.status === 'idle' &&
-                            data.queue_status.pending_jobs === 0
-                        ) {
-                            setIsProcessing(false);
-                            setTimeout(() => {
-                                setImportProgress(null);
-                                setFileInfo(null);
-                            }, 3000);
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error fetching import status:', error);
-                }
-            }, 2000);
-        }
-
-        return () => {
-            if (intervalId) {
-                clearInterval(intervalId);
-            }
-        };
-    }, [importProgress?.import_id, isProcessing]);
-
     const handleImportSubmit = (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -96,35 +29,19 @@ export default function UploadDPA() {
 
         post(route('import.file'), {
             forceFormData: true,
-            onSuccess: (response: any) => {
-                const data = response.props?.flash?.data || response;
-
-                if (data.success) {
-                    setImportProgress({
-                        import_id: data.import_id,
-                        import_session: {
-                            filename: data.file_info.name,
-                            file_size: 0,
-                            status: 'queued',
-                            started_at: new Date().toISOString(),
-                            progress: 0,
-                        },
-                        queue_status: {
-                            pending_jobs: 1,
-                            failed_jobs: 0,
-                            status: 'processing',
-                        },
-                    });
-                    setFileInfo(data.file_info);
-                    setIsProcessing(true);
-                }
-
-                reset();
+            onSuccess: () => {
+                // Close dialog and reset form
                 setIsUploadOpen(false);
+                reset();
+                alert('File berhasil diunggah dan sedang diproses!');
             },
             onError: (errors) => {
                 console.error('Error saat upload:', errors);
-                alert('Gagal mengunggah file. Silakan cek konsol.');
+                if (errors.file) {
+                    alert('' + errors.file);
+                } else {
+                    alert('Gagal mengunggah file. Silakan coba lagi.');
+                }
             },
         });
     };
@@ -153,7 +70,7 @@ export default function UploadDPA() {
             ) {
                 setImportData('file', file);
             } else {
-                alert('Hanya file Excel (.xlsx, .xls) yang diperbolehkan!');
+                alert('Hanya file Excel (.xlsx, .xls) yang dapat diunggah!');
             }
         }
     };
@@ -166,138 +83,18 @@ export default function UploadDPA() {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-    const getStatusColor = (status: string): string => {
-        switch (status) {
-            case 'processing':
-                return 'text-blue-600';
-            case 'completed':
-                return 'text-green-600';
-            case 'failed':
-                return 'text-red-600';
-            case 'idle':
-                return 'text-green-600';
-            default:
-                return 'text-gray-600';
-        }
-    };
-
-    const getStatusIcon = (status: string): string => {
-        switch (status) {
-            case 'processing':
-                return '⏳';
-            case 'completed':
-                return '✅';
-            case 'failed':
-                return '❌';
-            case 'idle':
-                return '✅';
-            default:
-                return '⏸️';
-        }
-    };
-
     return (
         <div className="mb-10 rounded-lg border-2 border-dotted border-black/25 p-4">
-            {/* Progress Monitor */}
-            {importProgress && (
-                <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
-                    <div className="mb-3 flex items-center justify-between">
-                        <h3 className="text-lg font-semibold text-blue-800">
-                            {getStatusIcon(importProgress.queue_status.status)}{' '}
-                            Status Import
-                        </h3>
-                        <span
-                            className={`text-sm font-medium ${getStatusColor(importProgress.queue_status.status)}`}
-                        >
-                            {importProgress.queue_status.status.toUpperCase()}
-                        </span>
-                    </div>
-
-                    {fileInfo && (
-                        <div className="mb-3 grid grid-cols-1 gap-4 md:grid-cols-3">
-                            <div className="rounded bg-white p-3">
-                                <div className="text-sm text-gray-600">
-                                    File Name
-                                </div>
-                                <div className="truncate font-medium">
-                                    {fileInfo.name}
-                                </div>
-                            </div>
-                            <div className="rounded bg-white p-3">
-                                <div className="text-sm text-gray-600">
-                                    File Size
-                                </div>
-                                <div className="font-medium">
-                                    {fileInfo.size}
-                                </div>
-                            </div>
-                            <div className="rounded bg-white p-3">
-                                <div className="text-sm text-gray-600">
-                                    Chunk Size
-                                </div>
-                                <div className="font-medium">
-                                    {fileInfo.chunk_size} rows
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="rounded bg-white p-3">
-                            <div className="text-sm text-gray-600">
-                                Antrian Jobs
-                            </div>
-                            <div className="text-lg font-medium">
-                                {importProgress.queue_status.pending_jobs}
-                            </div>
-                        </div>
-                        <div className="rounded bg-white p-3">
-                            <div className="text-sm text-gray-600">
-                                Failed Jobs
-                            </div>
-                            <div className="text-lg font-medium text-red-600">
-                                {importProgress.queue_status.failed_jobs}
-                            </div>
-                        </div>
-                    </div>
-
-                    {isProcessing && (
-                        <div className="mt-3">
-                            <div className="flex items-center space-x-2">
-                                <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-600 border-t-transparent"></div>
-                                <span className="text-sm text-blue-600">
-                                    Memproses data...
-                                </span>
-                            </div>
-                            <div className="mt-2 h-2 w-full rounded-full bg-gray-200">
-                                <div
-                                    className="h-2 rounded-full bg-blue-600 transition-all duration-300"
-                                    style={{
-                                        width:
-                                            importProgress.queue_status
-                                                .pending_jobs > 0
-                                                ? '50%'
-                                                : '100%',
-                                    }}
-                                ></div>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            )}
-
             <div className="flex flex-wrap items-center justify-center gap-6">
                 <CustomButton
                     variant="primary"
                     onClick={() => setIsUploadOpen(true)}
-                    disabled={isProcessing}
+                    disabled={processing}
                     className={
-                        isProcessing ? 'cursor-not-allowed opacity-50' : ''
+                        processing ? 'cursor-not-allowed opacity-50' : ''
                     }
                 >
-                    {isProcessing
-                        ? '⏳ Import Berjalan...'
-                        : '📊 Import Anggaran'}
+                    {processing ? 'Sedang Mengupload...' : 'Import Data DPA'}
                 </CustomButton>
 
                 {isUploadOpen && (
@@ -305,7 +102,7 @@ export default function UploadDPA() {
                         <div className="w-full max-w-md space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-2xl">
                             <div className="mb-4 flex items-center justify-between">
                                 <h2 className="flex items-center gap-2 text-xl font-bold text-gray-800">
-                                    📊 Import File Excel
+                                    Import File Data DPA
                                 </h2>
                                 <button
                                     type="button"
@@ -321,7 +118,7 @@ export default function UploadDPA() {
                                 encType="multipart/form-data"
                             >
                                 <div
-                                    className={`relative rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
+                                    className={`relative my-2 rounded-lg border-2 border-dashed p-6 text-center transition-colors ${
                                         dragActive
                                             ? 'border-blue-500 bg-blue-50'
                                             : 'border-gray-300 hover:border-gray-400'
@@ -349,7 +146,7 @@ export default function UploadDPA() {
                                             {importData.file ? (
                                                 <div className="space-y-1">
                                                     <div className="font-medium text-green-600">
-                                                        ✅{' '}
+                                                        {' '}
                                                         {importData.file.name}
                                                     </div>
                                                     <div className="text-sm text-gray-500">
@@ -362,15 +159,15 @@ export default function UploadDPA() {
                                             ) : (
                                                 <div>
                                                     <div className="font-medium">
-                                                        Drag & drop file Excel
-                                                        di sini
+                                                        Tarik dan lepas file
+                                                        Excel di sini
                                                     </div>
                                                     <div className="text-sm">
                                                         atau klik untuk memilih
                                                         file
                                                     </div>
                                                     <div className="mt-1 text-xs text-gray-400">
-                                                        Maksimal 50MB (.xlsx,
+                                                        Maksimal 5MB (.xlsx,
                                                         .xls)
                                                     </div>
                                                 </div>
@@ -380,8 +177,8 @@ export default function UploadDPA() {
                                 </div>
 
                                 {errors.file && (
-                                    <div className="mt-2 rounded bg-red-50 p-2 text-sm text-red-600">
-                                        ❌ {errors.file}
+                                    <div className="my-2 rounded bg-red-50 p-2 text-sm text-red-600">
+                                        {errors.file}
                                     </div>
                                 )}
 
@@ -400,7 +197,7 @@ export default function UploadDPA() {
                                             Mengupload...
                                         </div>
                                     ) : (
-                                        '🚀 Mulai Import'
+                                        'Mulai Import Data'
                                     )}
                                 </button>
                             </form>
@@ -408,11 +205,11 @@ export default function UploadDPA() {
                     </div>
                 )}
 
-                <CustomButton variant="secondary" disabled={isProcessing}>
-                    📝 Ubah Anggaran
+                <CustomButton variant="secondary" disabled={processing}>
+                    Ubah Data DPA
                 </CustomButton>
-                <CustomButton variant="outlined" disabled={isProcessing}>
-                    🔄 Geser Anggaran
+                <CustomButton variant="outlined" disabled={processing}>
+                    Transfer Anggaran
                 </CustomButton>
             </div>
         </div>
