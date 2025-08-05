@@ -1,5 +1,6 @@
 import CustomButton from '@/Components/CustomButton';
 import { FilterDropdown } from '@/Components/InputDPA/FilterDropdown';
+import { MultiSelectFilterDropdown } from '@/Components/InputDPA/MultiSelectFilterDropdown';
 import { router } from '@inertiajs/react';
 import { Download, EyeIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -16,6 +17,7 @@ type CascadingFilters = {
     skpd: string | null;
     unitSkpd: string | null;
     sumberDana: string | null;
+    paket: string[];
 };
 
 type Props = {
@@ -26,6 +28,7 @@ type Props = {
     skpdList: FilterData[];
     unitSkpdList: FilterData[];
     sumberDanaList: FilterData[];
+    paketList: FilterData[];
     visibleColumns: string[];
     isLoading: boolean;
     onShowDialog: () => void;
@@ -40,6 +43,7 @@ export default function CascadingFilter({
     skpdList,
     unitSkpdList,
     sumberDanaList,
+    paketList,
     visibleColumns,
     isLoading,
     onShowDialog,
@@ -54,7 +58,7 @@ export default function CascadingFilter({
 
     const handleFilterChange = (
         key: keyof CascadingFilters,
-        value: string | null,
+        value: string | null | string[],
     ) => {
         // Reset dependent filters when parent filter changes
         let newFilters = { ...filters, [key]: value };
@@ -96,6 +100,7 @@ export default function CascadingFilter({
             skpd: null,
             unitSkpd: null,
             sumberDana: null,
+            paket: [],
         };
 
         setFilters(resetFilters);
@@ -110,9 +115,12 @@ export default function CascadingFilter({
             },
         );
     };
-    const hasActiveFilter = Object.values(filters).some(
-        (value) => value !== null,
-    );
+    const hasActiveFilter = Object.entries(filters).some(([key, value]) => {
+        if (key === 'paket') {
+            return Array.isArray(value) && value.length > 0;
+        }
+        return value !== null;
+    });
 
     return (
         <div className="flex flex-wrap gap-4">
@@ -190,6 +198,14 @@ export default function CascadingFilter({
                 placeholder="Sumber Dana"
                 onSelect={(kode) => handleFilterChange('sumberDana', kode)}
                 isWithCode={false}
+            />
+
+            {/* Paket Filter - independent multi-select */}
+            <MultiSelectFilterDropdown
+                model={paketList}
+                value={filters.paket}
+                placeholder="Paket"
+                onSelect={(values) => handleFilterChange('paket', values)}
             />
 
             {/* Action Buttons */}

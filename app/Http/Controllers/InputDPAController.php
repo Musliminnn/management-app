@@ -18,6 +18,7 @@ class InputDPAController extends Controller
             'skpd' => null,
             'unitSkpd' => null,
             'sumberDana' => null,
+            'paket' => [],
         ]);
 
         $query = TrxBelanja::with([
@@ -60,6 +61,10 @@ class InputDPAController extends Controller
 
         if ($filters['sumberDana']) {
             $query->where('sumber_dana', $filters['sumberDana']);
+        }
+
+        if (!empty($filters['paket']) && is_array($filters['paket'])) {
+            $query->whereIn('paket', $filters['paket']);
         }
 
         $data = $query->orderBy('id')->paginate(10);
@@ -119,6 +124,7 @@ class InputDPAController extends Controller
             'skpdList' => $filterOptions['skpdList'],
             'unitSkpdList' => $filterOptions['unitSkpdList'],
             'sumberDanaList' => $filterOptions['sumberDanaList'],
+            'paketList' => $filterOptions['paketList'],
         ]);
     }
 
@@ -159,6 +165,10 @@ class InputDPAController extends Controller
 
         if ($filters['sumberDana']) {
             $grandTotalQuery->where('sumber_dana', $filters['sumberDana']);
+        }
+
+        if (!empty($filters['paket']) && is_array($filters['paket'])) {
+            $grandTotalQuery->whereIn('paket', $filters['paket']);
         }
 
         return $grandTotalQuery->sum('total_harga');
@@ -264,6 +274,20 @@ class InputDPAController extends Controller
                 ]);
         }
 
+        // Get all available Paket (independent, uppercase for display)
+        $paketList = collect();
+        if (TrxBelanja::count() > 0) {
+            $paketList = TrxBelanja::distinct()
+                ->pluck('paket')
+                ->filter()
+                ->unique()
+                ->values()
+                ->map(fn($val) => [
+                    'kode' => $val, // Keep original value for filtering
+                    'nama' => strtoupper($val), // Display in uppercase
+                ]);
+        }
+
         return [
             'programList' => $programList,
             'kegiatanList' => $kegiatanList,
@@ -271,6 +295,7 @@ class InputDPAController extends Controller
             'skpdList' => $skpdList,
             'unitSkpdList' => $unitSkpdList,
             'sumberDanaList' => $sumberDanaList,
+            'paketList' => $paketList,
         ];
     }
 
@@ -283,6 +308,7 @@ class InputDPAController extends Controller
             'cascading_filters.skpd' => $request->input('skpd'),
             'cascading_filters.unitSkpd' => $request->input('unitSkpd'),
             'cascading_filters.sumberDana' => $request->input('sumberDana'),
+            'cascading_filters.paket' => $request->input('paket', []),
         ]);
 
         return redirect()->route('inputdpa');
@@ -316,6 +342,7 @@ class InputDPAController extends Controller
             'skpd' => null,
             'unitSkpd' => null,
             'sumberDana' => null,
+            'paket' => [],
         ]);
 
         $query = TrxBelanja::with([
@@ -358,6 +385,10 @@ class InputDPAController extends Controller
 
         if ($filters['sumberDana']) {
             $query->where('sumber_dana', $filters['sumberDana']);
+        }
+
+        if (!empty($filters['paket']) && is_array($filters['paket'])) {
+            $query->whereIn('paket', $filters['paket']);
         }
 
         $data = $query->orderBy('id')->get();

@@ -43,7 +43,7 @@ class TransaksiBelanjaImport implements OnEachRow, WithHeadingRow, WithChunkRead
             'kode_sub_kegiatan'   => $r['KODE SUB KEGIATAN'],
             'kode_unit_skpd'      => $r['KODE UNIT SKPD'],
             'kode_akun'           => $r['KODE AKUN'],
-            'kode_standar_harga'  => $r['KODE STANDAR HARGA'] ?? null,
+            'kode_standar_harga'  => $r['KODE STANDAR HARGA'] ?? '-',
             'paket'               => $r['PAKET/KELOMPOK BELANJA/TAGGING (#)'] ?? '-',
             'keterangan_belanja'  => $r['KETERANGAN BELANJA/AKTIVITAS (-)'] ?? '-',
             'sumber_dana'         => $r['SUMBER DANA'] ?? '-',

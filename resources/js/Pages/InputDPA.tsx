@@ -48,10 +48,11 @@ export default function InputDPA() {
         skpd: null,
         unitSkpd: null,
         sumberDana: null,
+        paket: [],
     };
 
     const filterKey = props.cascadingFilters
-        ? `${cascadingFilters.program ?? ''}-${cascadingFilters.kegiatan ?? ''}-${cascadingFilters.subKegiatan ?? ''}-${cascadingFilters.skpd ?? ''}-${cascadingFilters.unitSkpd ?? ''}-${cascadingFilters.sumberDana ?? ''}`
+        ? `${cascadingFilters.program ?? ''}-${cascadingFilters.kegiatan ?? ''}-${cascadingFilters.subKegiatan ?? ''}-${cascadingFilters.skpd ?? ''}-${cascadingFilters.unitSkpd ?? ''}-${cascadingFilters.sumberDana ?? ''}-${cascadingFilters.paket?.join(',') ?? ''}`
         : `${props.filters?.program ?? ''}-${props.filters?.subKegiatan ?? ''}-${props.filters?.sumberDana ?? ''}`;
 
     const data = (page.props as any).data as Record<string, any>[];
@@ -64,12 +65,20 @@ export default function InputDPA() {
     const skpdList = (page.props as any).skpdList || [];
     const unitSkpdList = (page.props as any).unitSkpdList || [];
     const sumberDanaList = (page.props as any).sumberDanaList || [];
+    const paketList = (page.props as any).paketList || [];
 
     const columns = data.length > 0 ? Object.keys(data[0]) : [];
     const [visibleColumns, setVisibleColumns] = useState<string[]>(columns);
 
     const hasActiveFilter = props.cascadingFilters
-        ? Object.values(cascadingFilters).some((value: any) => value !== null)
+        ? Object.entries(cascadingFilters).some(
+              ([key, value]: [string, any]) => {
+                  if (key === 'paket') {
+                      return Array.isArray(value) && value.length > 0;
+                  }
+                  return value !== null;
+              },
+          )
         : filters.program !== null ||
           filters.subKegiatan !== null ||
           filters.sumberDana !== null;
@@ -172,6 +181,7 @@ export default function InputDPA() {
                             skpdList={skpdList}
                             unitSkpdList={unitSkpdList}
                             sumberDanaList={sumberDanaList}
+                            paketList={paketList}
                             visibleColumns={visibleColumns}
                             isLoading={isLoading}
                             onShowDialog={() => setIsDialogOpen(true)}
@@ -292,15 +302,22 @@ export default function InputDPA() {
 
                                                 // Format currency for price columns
                                                 if (
-                                                    col
+                                                    (col
                                                         .toLowerCase()
                                                         .includes('harga') ||
-                                                    col
+                                                        col
+                                                            .toLowerCase()
+                                                            .includes(
+                                                                'satuan',
+                                                            ) ||
+                                                        col
+                                                            .toLowerCase()
+                                                            .includes(
+                                                                'total',
+                                                            )) &&
+                                                    !col
                                                         .toLowerCase()
-                                                        .includes('satuan') ||
-                                                    col
-                                                        .toLowerCase()
-                                                        .includes('total')
+                                                        .includes('kode')
                                                 ) {
                                                     if (
                                                         typeof cellValue ===

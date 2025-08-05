@@ -209,7 +209,7 @@ export default function UploadDPA() {
                     Ubah Data DPA
                 </CustomButton>
                 <CustomButton variant="outlined" disabled={processing}>
-                    Transfer Anggaran
+                    Geser Anggaran
                 </CustomButton>
             </div>
         </div>
