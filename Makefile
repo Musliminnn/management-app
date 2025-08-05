@@ -241,3 +241,7 @@ clean-all: ## Clean everything including images
 import-test: ## Test import functionality
 	@echo "$(GREEN)Testing import functionality...$(RESET)"
 	docker-compose exec app php artisan tinker --execute="\\App\\Jobs\\ImportTransaksiBelanja::dispatch('test', 'test-import-id');"
+
+redis-flush: ## Flush all Redis databases (clear all keys)
+	@echo "$(RED)Flushing all Redis data...$(RESET)"
+	docker-compose exec redis redis-cli FLUSHALL

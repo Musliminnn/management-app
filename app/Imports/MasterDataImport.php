@@ -62,14 +62,13 @@ class MasterDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, S
 
     public function onRow(Row $row): void
     {
-        $r = array_map('trim', $row->toArray()); // Normalisasi: trim semua value
+        $r = array_map('trim', $row->toArray());
 
         try {
-            // Validasi minimal untuk mencegah duplikasi tak perlu
             if (
-                empty($r['kode_urusan']) || empty($r['kode_program']) ||
-                empty($r['kode_skpd']) || empty($r['kode_akun']) ||
-                empty($r['kode_standar_harga'])
+                empty($r['KODE URUSAN']) || empty($r['KODE PROGRAM']) ||
+                empty($r['KODE SKPD']) || empty($r['KODE AKUN']) ||
+                empty($r['KODE STANDAR HARGA'])
             ) {
                 Log::info('Baris dilewati karena field penting kosong', $r);
                 return;
@@ -77,103 +76,103 @@ class MasterDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, S
 
             // === RefUrusan ===
             if (
-                !isset($this->cache['urusan'][$r['kode_urusan']]) &&
-                !isset($this->redisCache['urusan'][$r['kode_urusan']])
+                !isset($this->cache['urusan'][$r['KODE URUSAN']]) &&
+                !isset($this->redisCache['urusan'][$r['KODE URUSAN']])
             ) {
                 RefUrusan::firstOrCreate(
-                    ['kode' => $r['kode_urusan']],
-                    ['nama' => $r['nama_urusan'] ?? '']
+                    ['kode' => $r['KODE URUSAN']],
+                    ['nama' => $r['NAMA URUSAN'] ?? '']
                 );
-                $this->cache['urusan'][$r['kode_urusan']] = true;
+                $this->cache['urusan'][$r['KODE URUSAN']] = true;
                 // Update Redis cache
-                Cache::put('ref_urusan_codes', array_merge($this->redisCache['urusan'], [$r['kode_urusan'] => $r['nama_urusan'] ?? '']), 3600);
+                Cache::put('ref_urusan_codes', array_merge($this->redisCache['urusan'], [$r['KODE URUSAN'] => $r['NAMA URUSAN'] ?? '']), 3600);
             }
 
             // === RefBidang ===
-            if (!isset($this->cache['bidang'][$r['kode_bidang_urusan']])) {
+            if (!isset($this->cache['bidang'][$r['KODE BIDANG URUSAN']])) {
                 RefBidang::firstOrCreate(
-                    ['kode' => $r['kode_bidang_urusan']],
+                    ['kode' => $r['KODE BIDANG URUSAN']],
                     [
-                        'nama' => $r['nama_bidang_urusan'] ?? '',
-                        'kode_urusan' => $r['kode_urusan'],
+                        'nama' => $r['NAMA BIDANG URUSAN'] ?? '',
+                        'kode_urusan' => $r['KODE URUSAN'],
                     ]
                 );
-                $this->cache['bidang'][$r['kode_bidang_urusan']] = true;
+                $this->cache['bidang'][$r['KODE BIDANG URUSAN']] = true;
             }
 
             // === RefProgram ===
-            if (!isset($this->cache['program'][$r['kode_program']])) {
+            if (!isset($this->cache['program'][$r['KODE PROGRAM']])) {
                 RefProgram::firstOrCreate(
-                    ['kode' => $r['kode_program']],
+                    ['kode' => $r['KODE PROGRAM']],
                     [
-                        'nama' => $r['nama_program'] ?? '',
-                        'kode_bidang' => $r['kode_bidang_urusan'],
+                        'nama' => $r['NAMA PROGRAM'] ?? '',
+                        'kode_bidang' => $r['KODE BIDANG URUSAN'],
                     ]
                 );
-                $this->cache['program'][$r['kode_program']] = true;
+                $this->cache['program'][$r['KODE PROGRAM']] = true;
             }
 
             // === RefKegiatan ===
-            if (!isset($this->cache['kegiatan'][$r['kode_kegiatan']])) {
+            if (!isset($this->cache['kegiatan'][$r['KODE KEGIATAN']])) {
                 RefKegiatan::firstOrCreate(
-                    ['kode' => $r['kode_kegiatan']],
+                    ['kode' => $r['KODE KEGIATAN']],
                     [
-                        'nama' => $r['nama_kegiatan'] ?? '',
-                        'kode_program' => $r['kode_program'],
+                        'nama' => $r['NAMA KEGIATAN'] ?? '',
+                        'kode_program' => $r['KODE PROGRAM'],
                     ]
                 );
-                $this->cache['kegiatan'][$r['kode_kegiatan']] = true;
+                $this->cache['kegiatan'][$r['KODE KEGIATAN']] = true;
             }
 
             // === RefSubKegiatan ===
-            if (!isset($this->cache['sub_kegiatan'][$r['kode_sub_kegiatan']])) {
+            if (!isset($this->cache['sub_kegiatan'][$r['KODE SUB KEGIATAN']])) {
                 RefSubKegiatan::firstOrCreate(
-                    ['kode' => $r['kode_sub_kegiatan']],
+                    ['kode' => $r['KODE SUB KEGIATAN']],
                     [
-                        'nama' => $r['nama_sub_kegiatan'] ?? '',
-                        'kode_kegiatan' => $r['kode_kegiatan'],
+                        'nama' => $r['NAMA SUB KEGIATAN'] ?? '',
+                        'kode_kegiatan' => $r['KODE KEGIATAN'],
                     ]
                 );
-                $this->cache['sub_kegiatan'][$r['kode_sub_kegiatan']] = true;
+                $this->cache['sub_kegiatan'][$r['KODE SUB KEGIATAN']] = true;
             }
 
             // === RefSkpd ===
-            if (!isset($this->cache['skpd'][$r['kode_skpd']])) {
+            if (!isset($this->cache['skpd'][$r['KODE SKPD']])) {
                 RefSkpd::firstOrCreate(
-                    ['kode' => $r['kode_skpd']],
-                    ['nama' => $r['nama_skpd'] ?? '']
+                    ['kode' => $r['KODE SKPD']],
+                    ['nama' => $r['NAMA SKPD'] ?? '']
                 );
-                $this->cache['skpd'][$r['kode_skpd']] = true;
+                $this->cache['skpd'][$r['KODE SKPD']] = true;
             }
 
             // === RefUnitSkpd ===
-            if (!isset($this->cache['unit_skpd'][$r['kode_unit_skpd']])) {
+            if (!isset($this->cache['unit_skpd'][$r['KODE UNIT SKPD']])) {
                 RefUnitSkpd::firstOrCreate(
-                    ['kode' => $r['kode_unit_skpd']],
+                    ['kode' => $r['KODE UNIT SKPD']],
                     [
-                        'nama' => $r['nama_unit_skpd'] ?? '',
-                        'kode_skpd' => $r['kode_skpd'],
+                        'nama' => $r['NAMA UNIT SKPD'] ?? '',
+                        'kode_skpd' => $r['KODE SKPD'],
                     ]
                 );
-                $this->cache['unit_skpd'][$r['kode_unit_skpd']] = true;
+                $this->cache['unit_skpd'][$r['KODE UNIT SKPD']] = true;
             }
 
             // === RefAkun ===
-            if (!isset($this->cache['akun'][$r['kode_akun']])) {
+            if (!isset($this->cache['akun'][$r['KODE AKUN']])) {
                 RefAkun::firstOrCreate(
-                    ['kode' => $r['kode_akun']],
-                    ['nama' => $r['nama_akun'] ?? '']
+                    ['kode' => $r['KODE AKUN']],
+                    ['nama' => $r['NAMA AKUN'] ?? '']
                 );
-                $this->cache['akun'][$r['kode_akun']] = true;
+                $this->cache['akun'][$r['KODE AKUN']] = true;
             }
 
             // === RefStandarHarga ===
-            if (!isset($this->cache['standar_harga'][$r['kode_standar_harga']])) {
+            if (!isset($this->cache['standar_harga'][$r['KODE STANDAR HARGA']])) {
                 RefStandarHarga::firstOrCreate(
-                    ['kode' => $r['kode_standar_harga']],
-                    ['nama' => $r['nama_standar_harga'] ?? '']
+                    ['kode' => $r['KODE STANDAR HARGA']],
+                    ['nama' => $r['NAMA STANDAR HARGA'] ?? '']
                 );
-                $this->cache['standar_harga'][$r['kode_standar_harga']] = true;
+                $this->cache['standar_harga'][$r['KODE STANDAR HARGA']] = true;
             }
         } catch (\Throwable $e) {
             Log::error('Gagal parsing row MasterDataImport', [

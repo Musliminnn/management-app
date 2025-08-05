@@ -67,12 +67,10 @@ class InputDPAController extends Controller
                 'kode_standar_harga'  => $item->standarHarga->kode ?? null,
                 'nama_standar_harga'  => $item->standarHarga->nama ?? null,
                 'spesifikasi'         => $item->spesifikasi,
-                'koefisien_murni'     => $item->koefisien_murni,
-                'harga_satuan_murni'  => $item->harga_satuan_murni,
-                'total_harga_murni'   => $item->total_harga_murni,
                 'koefisien'           => $item->koefisien,
                 'harga_satuan'        => $item->harga_satuan,
                 'total_harga'         => $item->total_harga,
+                'unit_kerja'          => $item->unit_kerja,
             ];
         });
 
@@ -202,12 +200,10 @@ class InputDPAController extends Controller
                 'kode_standar_harga'  => $item->standarHarga->kode ?? null,
                 'nama_standar_harga'  => $item->standarHarga->nama ?? null,
                 'spesifikasi'         => $item->spesifikasi,
-                'koefisien_murni'     => $item->koefisien_murni,
-                'harga_satuan_murni'  => $item->harga_satuan_murni,
-                'total_harga_murni'   => $item->total_harga_murni,
                 'koefisien'           => $item->koefisien,
                 'harga_satuan'        => $item->harga_satuan,
                 'total_harga'         => $item->total_harga,
+                'unit_kerja'          => $item->unit_kerja,
             ];
         });
 

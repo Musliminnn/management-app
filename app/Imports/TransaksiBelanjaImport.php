@@ -30,32 +30,29 @@ class TransaksiBelanjaImport implements OnEachRow, WithHeadingRow, WithChunkRead
     {
         $r = array_map('trim', $row->toArray());
 
-        // Validasi wajib minimal
         if (
-            empty($r['kode_sub_kegiatan']) ||
-            empty($r['kode_unit_skpd']) ||
-            empty($r['kode_akun'])
+            empty($r['KODE SUB KEGIATAN']) ||
+            empty($r['KODE UNIT SKPD']) ||
+            empty($r['KODE AKUN'])
         ) {
             Log::info("Row dilewati karena kode penting kosong.", $r);
             return;
         }
 
         $this->batch[] = [
-            'kode_sub_kegiatan'   => $r['kode_sub_kegiatan'],
-            'kode_unit_skpd'      => $r['kode_unit_skpd'],
-            'kode_akun'           => $r['kode_akun'],
-            'kode_standar_harga'  => $r['kode_standar_harga'] ?? null,
-            'paket'               => $r['paket'] ?? '',
-            'keterangan_belanja'  => $r['keterangan_belanja'] ?? '',
-            'sumber_dana'         => $r['sumber_dana'] ?? '',
-            'nama_penerima'       => $r['nama_penerima'] ?? '',
-            'spesifikasi'         => $r['spesifikasi'] ?? '',
-            'koefisien_murni'     => $r['koefisien_murni'] ?? '',
-            'harga_satuan_murni'  => floatval($r['harga_satuan_murni'] ?? 0),
-            'total_harga_murni'   => floatval($r['total_harga_murni'] ?? 0),
-            'koefisien'           => $r['koefisien'] ?? '',
-            'harga_satuan'        => floatval($r['harga_satuan'] ?? 0),
-            'total_harga'         => floatval($r['total_harga'] ?? 0),
+            'kode_sub_kegiatan'   => $r['KODE SUB KEGIATAN'],
+            'kode_unit_skpd'      => $r['KODE UNIT SKPD'],
+            'kode_akun'           => $r['KODE AKUN'],
+            'kode_standar_harga'  => $r['KODE STANDAR HARGA'] ?? null,
+            'paket'               => $r['PAKET/KELOMPOK BELANJA/TAGGING (#)'] ?? '-',
+            'keterangan_belanja'  => $r['KETERANGAN BELANJA/AKTIVITAS (-)'] ?? '-',
+            'sumber_dana'         => $r['SUMBER DANA'] ?? '-',
+            'nama_penerima'       => $r['NAMA PENERIMA'] ?? '-',
+            'spesifikasi'         => $r['SPESIFIKASI'] ?? '-',
+            'koefisien'           => $r['KOEFISIEN'] ?? '-',
+            'harga_satuan'        => floatval($r['HARGA SATUAN'] ?? 0),
+            'total_harga'         => floatval($r['TOTAL HARGA'] ?? 0),
+            'unit_kerja'          => $r['UNIT KERJA'] ?? '-',
             'created_at'          => now(),
             'updated_at'          => now(),
         ];

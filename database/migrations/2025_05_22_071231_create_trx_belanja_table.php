@@ -37,12 +37,10 @@ return new class extends Migration
             $table->string('nama_penerima')->nullable();
 
             $table->text('spesifikasi')->nullable();
-            $table->string('koefisien_murni')->nullable();
-            $table->decimal('harga_satuan_murni', 20, 2)->nullable();
-            $table->decimal('total_harga_murni', 20, 2)->nullable();
             $table->string('koefisien')->nullable();
             $table->decimal('harga_satuan', 20, 2)->nullable();
             $table->decimal('total_harga', 20, 2)->nullable();
+            $table->string('unit_kerja')->nullable();
 
             $table->timestamps();
         });

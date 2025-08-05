@@ -18,12 +18,10 @@ class TrxBelanja extends Model
         'sumber_dana',
         'nama_penerima',
         'spesifikasi',
-        'koefisien_murni',
-        'harga_satuan_murni',
-        'total_harga_murni',
         'koefisien',
         'harga_satuan',
         'total_harga',
+        'unit_kerja'
     ];
 
     public function subKegiatan()
