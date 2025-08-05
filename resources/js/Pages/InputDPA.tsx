@@ -1,5 +1,5 @@
 import CustomButton from '@/Components/CustomButton';
-import { FilterDropdown } from '@/Components/InputDPA/FilterDropdown';
+import CascadingFilter from '@/Components/InputDPA/CascadingFilter';
 import UploadDPA from '@/Components/InputDPA/UploadDPA';
 import { ParentLayout } from '@/Layouts/MainLayout';
 import { Link, router, usePage } from '@inertiajs/react';
@@ -10,6 +10,7 @@ export default function InputDPA() {
     const [isLoading, setIsLoading] = useState(false);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
 
+    // Legacy filters (for backward compatibility)
     const [filters, setFilters] = useState<{
         program: string | null;
         subKegiatan: string | null;
@@ -19,31 +20,43 @@ export default function InputDPA() {
         subKegiatan: null,
         sumberDana: null,
     });
+
     const page = usePage();
     const props = usePage().props as any;
-    const filterKey = `${props.filters.program ?? ''}-${props.filters.subKegiatan ?? ''}-${props.filters.sumberDana ?? ''}`;
+
+    // Use cascading filters if available, otherwise fall back to legacy filters
+    const cascadingFilters = props.cascadingFilters || {
+        program: null,
+        kegiatan: null,
+        subKegiatan: null,
+        skpd: null,
+        unitSkpd: null,
+        sumberDana: null,
+    };
+
+    const filterKey = props.cascadingFilters
+        ? `${cascadingFilters.program ?? ''}-${cascadingFilters.kegiatan ?? ''}-${cascadingFilters.subKegiatan ?? ''}-${cascadingFilters.skpd ?? ''}-${cascadingFilters.unitSkpd ?? ''}-${cascadingFilters.sumberDana ?? ''}`
+        : `${props.filters?.program ?? ''}-${props.filters?.subKegiatan ?? ''}-${props.filters?.sumberDana ?? ''}`;
+
     const data = (page.props as any).data as Record<string, any>[];
     const pagination = (page.props as any).pagination;
-    const programs = (page.props as any).programList as {
-        kode: string;
-        nama: string;
-    }[];
-    const subKegiatanList = (page.props as any).subKegiatanList as {
-        kode: string;
-        nama: string;
-    }[];
-    const sumberDanaList = (page.props as any).sumberDanaList as {
-        kode: string;
-        nama: string;
-    }[];
+
+    // Get filter lists - use cascading if available
+    const programList = (page.props as any).programList || [];
+    const kegiatanList = (page.props as any).kegiatanList || [];
+    const subKegiatanList = (page.props as any).subKegiatanList || [];
+    const skpdList = (page.props as any).skpdList || [];
+    const unitSkpdList = (page.props as any).unitSkpdList || [];
+    const sumberDanaList = (page.props as any).sumberDanaList || [];
 
     const columns = data.length > 0 ? Object.keys(data[0]) : [];
     const [visibleColumns, setVisibleColumns] = useState<string[]>(columns);
 
-    const hasActiveFilter =
-        filters.program !== null ||
-        filters.subKegiatan !== null ||
-        filters.sumberDana !== null;
+    const hasActiveFilter = props.cascadingFilters
+        ? Object.values(cascadingFilters).some((value: any) => value !== null)
+        : filters.program !== null ||
+          filters.subKegiatan !== null ||
+          filters.sumberDana !== null;
 
     const handleFilterChange = (
         key: keyof typeof filters,
@@ -122,8 +135,11 @@ export default function InputDPA() {
     };
 
     useEffect(() => {
-        const initialFilters = (page.props as any).filters;
-        setFilters(initialFilters);
+        const initialFilters =
+            (page.props as any).filters || (page.props as any).cascadingFilters;
+        if ((page.props as any).filters) {
+            setFilters(initialFilters);
+        }
     }, [page.props]);
 
     return (
@@ -131,66 +147,42 @@ export default function InputDPA() {
             <div className="max-w-full overflow-x-auto p-1">
                 <UploadDPA />
                 {data.length !== 0 && (
-                    <div className="mb-5 flex flex-wrap gap-4">
-                        <FilterDropdown
-                            model={programs}
-                            value={filters.program}
-                            placeholder="Pilih Program"
-                            onSelect={(kode) =>
-                                handleFilterChange('program', kode)
-                            }
+                    <>
+                        <CascadingFilter
+                            initialFilters={cascadingFilters}
+                            programList={programList}
+                            kegiatanList={kegiatanList}
+                            subKegiatanList={subKegiatanList}
+                            skpdList={skpdList}
+                            unitSkpdList={unitSkpdList}
+                            sumberDanaList={sumberDanaList}
                         />
 
-                        <FilterDropdown
-                            model={subKegiatanList}
-                            value={filters.subKegiatan}
-                            placeholder="Sub Kegiatan"
-                            onSelect={(kode) =>
-                                handleFilterChange('subKegiatan', kode)
-                            }
-                        />
-
-                        <FilterDropdown
-                            model={sumberDanaList}
-                            value={filters.sumberDana}
-                            placeholder="Sumber Dana"
-                            onSelect={(kode) =>
-                                handleFilterChange('sumberDana', kode)
-                            }
-                            isWithCode={false}
-                        />
-
-                        <CustomButton
-                            variant="shadow"
-                            className="flex items-center justify-center gap-2"
-                            onClick={() => setIsDialogOpen(true)}
-                        >
-                            <span>Tampilkan</span>
-                            <EyeIcon className="size-4" />
-                        </CustomButton>
-
-                        <CustomButton
-                            variant="primary"
-                            className="flex items-center justify-center gap-2"
-                            onClick={handleExport}
-                            disabled={visibleColumns.length === 0 || isLoading}
-                        >
-                            <span>
-                                {isLoading ? 'Mengunduh...' : 'Export CSV'}
-                            </span>
-                            <Download className="size-4" />
-                        </CustomButton>
-
-                        {hasActiveFilter && (
+                        <div className="mb-5 flex flex-wrap gap-4">
                             <CustomButton
-                                variant="outlined"
-                                className="border border-red-400 text-red-600"
-                                onClick={resetAllFilters}
+                                variant="shadow"
+                                className="flex items-center justify-center gap-2"
+                                onClick={() => setIsDialogOpen(true)}
                             >
-                                Reset Filter
+                                <span>Tampilkan</span>
+                                <EyeIcon className="size-4" />
                             </CustomButton>
-                        )}
-                    </div>
+
+                            <CustomButton
+                                variant="primary"
+                                className="flex items-center justify-center gap-2"
+                                onClick={handleExport}
+                                disabled={
+                                    visibleColumns.length === 0 || isLoading
+                                }
+                            >
+                                <span>
+                                    {isLoading ? 'Mengunduh...' : 'Export CSV'}
+                                </span>
+                                <Download className="size-4" />
+                            </CustomButton>
+                        </div>
+                    </>
                 )}
 
                 {isDialogOpen && (

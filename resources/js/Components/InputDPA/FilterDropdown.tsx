@@ -25,9 +25,10 @@ export function FilterDropdown({
     const searchInputRef = useRef<HTMLInputElement>(null);
 
     const handleSelect = (kode: string) => {
+        if (!onSelect) return; // Don't do anything if onSelect is not provided
         const nextValue = value === kode ? null : kode;
         setSearchTerm(''); // Reset search term when selecting
-        if (onSelect) onSelect(nextValue);
+        onSelect(nextValue);
     };
 
     // Filter items based on search term
@@ -43,7 +44,9 @@ export function FilterDropdown({
 
     const selectedItem = value ? model.find((p) => p.kode === value) : null;
     const selectedName = selectedItem
-        ? `${selectedItem.kode} - ${selectedItem.nama}`
+        ? isWithCode
+            ? `${selectedItem.kode} - ${selectedItem.nama}`
+            : selectedItem.nama
         : placeholder;
 
     // Focus search input when dropdown opens
@@ -59,11 +62,14 @@ export function FilterDropdown({
     return (
         <Dropdown>
             <Dropdown.Trigger>
-                <CustomButton variant="shadow" className="gap-2">
-                    <span className="block max-w-full truncate">
+                <CustomButton
+                    variant="shadow"
+                    className="flex max-w-48 items-center justify-between gap-2 px-3 py-2"
+                >
+                    <span className="w-24 truncate text-left">
                         {selectedName || placeholder}
                     </span>
-                    <ChevronDown className="size-5" />
+                    <ChevronDown className="size-5 flex-shrink-0" />
                 </CustomButton>
             </Dropdown.Trigger>
 

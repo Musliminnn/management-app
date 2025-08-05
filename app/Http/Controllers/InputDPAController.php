@@ -11,9 +11,12 @@ class InputDPAController extends Controller
 {
     public function index(Request $request)
     {
-        $filters = session('filters', [
+        $filters = session('cascading_filters', [
             'program' => null,
+            'kegiatan' => null,
             'subKegiatan' => null,
+            'skpd' => null,
+            'unitSkpd' => null,
             'sumberDana' => null,
         ]);
 
@@ -24,15 +27,34 @@ class InputDPAController extends Controller
             'standarHarga',
         ]);
 
+        // Apply cascading filters
         if ($filters['program']) {
             $query->whereHas('subKegiatan.kegiatan.program', function ($q) use ($filters) {
                 $q->where('kode', $filters['program']);
             });
         }
 
+        if ($filters['kegiatan']) {
+            $query->whereHas('subKegiatan.kegiatan', function ($q) use ($filters) {
+                $q->where('kode', $filters['kegiatan']);
+            });
+        }
+
         if ($filters['subKegiatan']) {
             $query->whereHas('subKegiatan', function ($q) use ($filters) {
                 $q->where('kode', $filters['subKegiatan']);
+            });
+        }
+
+        if ($filters['skpd']) {
+            $query->whereHas('unitSkpd.skpd', function ($q) use ($filters) {
+                $q->where('kode', $filters['skpd']);
+            });
+        }
+
+        if ($filters['unitSkpd']) {
+            $query->whereHas('unitSkpd', function ($q) use ($filters) {
+                $q->where('kode', $filters['unitSkpd']);
             });
         }
 
@@ -74,38 +96,8 @@ class InputDPAController extends Controller
             ];
         });
 
-        $allData = TrxBelanja::with([
-            'subKegiatan.kegiatan.program',
-        ])->get();
-
-        $programList = $allData
-            ->pluck('subKegiatan.kegiatan.program')
-            ->unique('kode')
-            ->values()
-            ->map(fn($program) => [
-                'kode' => $program->kode,
-                'nama' => $program->nama,
-            ]);
-
-        $subKegiatanList = $allData
-            ->pluck('subKegiatan')
-            ->filter()
-            ->unique('kode')
-            ->values()
-            ->map(fn($sub) => [
-                'kode' => $sub->kode,
-                'nama' => $sub->nama,
-            ]);
-
-        $sumberDanaList = $allData
-            ->pluck('sumber_dana')
-            ->filter()
-            ->unique()
-            ->values()
-            ->map(fn($val) => [
-                'kode' => $val,
-                'nama' => $val,
-            ]);
+        // Get filter options based on current selections
+        $filterOptions = $this->getFilterOptions($filters);
 
         return Inertia::render('InputDPA', [
             'data' => $rows,
@@ -116,11 +108,138 @@ class InputDPAController extends Controller
                 'total' => $data->total(),
                 'links' => $data->linkCollection(),
             ],
-            'programList' => $programList,
-            'subKegiatanList' => $subKegiatanList,
-            'sumberDanaList' => $sumberDanaList,
-            'filters' => $filters,
+            'cascadingFilters' => $filters,
+            'programList' => $filterOptions['programList'],
+            'kegiatanList' => $filterOptions['kegiatanList'],
+            'subKegiatanList' => $filterOptions['subKegiatanList'],
+            'skpdList' => $filterOptions['skpdList'],
+            'unitSkpdList' => $filterOptions['unitSkpdList'],
+            'sumberDanaList' => $filterOptions['sumberDanaList'],
         ]);
+    }
+
+    private function getFilterOptions($filters)
+    {
+        // Get all available Programs (top level, always available)
+        $programList = collect();
+        if (TrxBelanja::count() > 0) {
+            $programList = TrxBelanja::with('subKegiatan.kegiatan.program')
+                ->get()
+                ->pluck('subKegiatan.kegiatan.program')
+                ->filter()
+                ->unique('kode')
+                ->values()
+                ->map(fn($item) => [
+                    'kode' => $item->kode,
+                    'nama' => $item->nama,
+                ]);
+        }
+
+        // Get Kegiatan based on selected Program
+        $kegiatanList = collect();
+        if ($filters['program']) {
+            $kegiatanList = TrxBelanja::with('subKegiatan.kegiatan.program')
+                ->whereHas('subKegiatan.kegiatan.program', function ($q) use ($filters) {
+                    $q->where('kode', $filters['program']);
+                })
+                ->get()
+                ->pluck('subKegiatan.kegiatan')
+                ->filter()
+                ->unique('kode')
+                ->values()
+                ->map(fn($item) => [
+                    'kode' => $item->kode,
+                    'nama' => $item->nama,
+                ]);
+        }
+
+        // Get Sub Kegiatan based on selected Kegiatan
+        $subKegiatanList = collect();
+        if ($filters['kegiatan']) {
+            $subKegiatanList = TrxBelanja::with('subKegiatan.kegiatan')
+                ->whereHas('subKegiatan.kegiatan', function ($q) use ($filters) {
+                    $q->where('kode', $filters['kegiatan']);
+                })
+                ->get()
+                ->pluck('subKegiatan')
+                ->filter()
+                ->unique('kode')
+                ->values()
+                ->map(fn($item) => [
+                    'kode' => $item->kode,
+                    'nama' => $item->nama,
+                ]);
+        }
+
+        // Get all available SKPD (independent of hierarchy)
+        $skpdList = collect();
+        if (TrxBelanja::count() > 0) {
+            $skpdList = TrxBelanja::with('unitSkpd.skpd')
+                ->get()
+                ->pluck('unitSkpd.skpd')
+                ->filter()
+                ->unique('kode')
+                ->values()
+                ->map(fn($item) => [
+                    'kode' => $item->kode,
+                    'nama' => $item->nama,
+                ]);
+        }
+
+        // Get Unit SKPD based on selected SKPD
+        $unitSkpdList = collect();
+        if ($filters['skpd']) {
+            $unitSkpdList = TrxBelanja::with('unitSkpd.skpd')
+                ->whereHas('unitSkpd.skpd', function ($q) use ($filters) {
+                    $q->where('kode', $filters['skpd']);
+                })
+                ->get()
+                ->pluck('unitSkpd')
+                ->filter()
+                ->unique('kode')
+                ->values()
+                ->map(fn($item) => [
+                    'kode' => $item->kode,
+                    'nama' => $item->nama,
+                ]);
+        }
+
+        // Get all available Sumber Dana (independent)
+        $sumberDanaList = collect();
+        if (TrxBelanja::count() > 0) {
+            $sumberDanaList = TrxBelanja::distinct()
+                ->pluck('sumber_dana')
+                ->filter()
+                ->unique()
+                ->values()
+                ->map(fn($val) => [
+                    'kode' => $val,
+                    'nama' => $val,
+                ]);
+        }
+
+        return [
+            'programList' => $programList,
+            'kegiatanList' => $kegiatanList,
+            'subKegiatanList' => $subKegiatanList,
+            'skpdList' => $skpdList,
+            'unitSkpdList' => $unitSkpdList,
+            'sumberDanaList' => $sumberDanaList,
+        ];
+    }
+
+    public function cascadingFilter(Request $request)
+    {
+        session([
+            'cascading_filters.program' => $request->input('program'),
+            'cascading_filters.kegiatan' => $request->input('kegiatan'),
+            'cascading_filters.subKegiatan' => $request->input('subKegiatan'),
+            'cascading_filters.skpd' => $request->input('skpd'),
+            'cascading_filters.unitSkpd' => $request->input('unitSkpd'),
+            'cascading_filters.sumberDana' => $request->input('sumberDana'),
+        ]);
+
+        return redirect()->route('inputdpa');
     }
 
     public function filter(Request $request)
@@ -136,7 +255,7 @@ class InputDPAController extends Controller
 
     public function reset()
     {
-        session()->forget('filters');
+        session()->forget(['filters', 'cascading_filters']);
         return redirect()->route('inputdpa');
     }
 
@@ -144,9 +263,12 @@ class InputDPAController extends Controller
     {
         $visibleColumns = $request->input('visibleColumns', []);
 
-        $filters = session('filters', [
+        $filters = session('cascading_filters', [
             'program' => null,
+            'kegiatan' => null,
             'subKegiatan' => null,
+            'skpd' => null,
+            'unitSkpd' => null,
             'sumberDana' => null,
         ]);
 
@@ -157,15 +279,34 @@ class InputDPAController extends Controller
             'standarHarga',
         ]);
 
+        // Apply cascading filters
         if ($filters['program']) {
             $query->whereHas('subKegiatan.kegiatan.program', function ($q) use ($filters) {
                 $q->where('kode', $filters['program']);
             });
         }
 
+        if ($filters['kegiatan']) {
+            $query->whereHas('subKegiatan.kegiatan', function ($q) use ($filters) {
+                $q->where('kode', $filters['kegiatan']);
+            });
+        }
+
         if ($filters['subKegiatan']) {
             $query->whereHas('subKegiatan', function ($q) use ($filters) {
                 $q->where('kode', $filters['subKegiatan']);
+            });
+        }
+
+        if ($filters['skpd']) {
+            $query->whereHas('unitSkpd.skpd', function ($q) use ($filters) {
+                $q->where('kode', $filters['skpd']);
+            });
+        }
+
+        if ($filters['unitSkpd']) {
+            $query->whereHas('unitSkpd', function ($q) use ($filters) {
+                $q->where('kode', $filters['unitSkpd']);
             });
         }
 
