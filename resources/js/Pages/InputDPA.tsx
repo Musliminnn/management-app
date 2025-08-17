@@ -57,6 +57,7 @@ export default function InputDPA() {
 
     const data = (page.props as any).data as Record<string, any>[];
     const pagination = (page.props as any).pagination;
+    const perPage = (page.props as any).perPage || 10;
 
     // Get filter lists - use cascading if available
     const programList = (page.props as any).programList || [];
@@ -159,6 +160,20 @@ export default function InputDPA() {
         });
     };
 
+    const handlePerPageChange = (newPerPage: number) => {
+        setIsLoading(true);
+        router.post(
+            route('inputdpa.change-per-page'),
+            { per_page: newPerPage },
+            {
+                preserveScroll: true,
+                preserveState: false,
+                replace: true,
+                onFinish: () => setIsLoading(false),
+            },
+        );
+    };
+
     useEffect(() => {
         const initialFilters =
             (page.props as any).filters || (page.props as any).cascadingFilters;
@@ -184,8 +199,10 @@ export default function InputDPA() {
                             paketList={paketList}
                             visibleColumns={visibleColumns}
                             isLoading={isLoading}
+                            perPage={perPage}
                             onShowDialog={() => setIsDialogOpen(true)}
                             onExport={handleExport}
+                            onPerPageChange={handlePerPageChange}
                         />
                     </div>
                 )}

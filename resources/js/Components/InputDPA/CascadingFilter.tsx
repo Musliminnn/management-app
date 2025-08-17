@@ -31,8 +31,10 @@ type Props = {
     paketList: FilterData[];
     visibleColumns: string[];
     isLoading: boolean;
+    perPage: number;
     onShowDialog: () => void;
     onExport: () => void;
+    onPerPageChange: (perPage: number) => void;
 };
 
 export default function CascadingFilter({
@@ -46,8 +48,10 @@ export default function CascadingFilter({
     paketList,
     visibleColumns,
     isLoading,
+    perPage,
     onShowDialog,
     onExport,
+    onPerPageChange,
 }: Props) {
     const [filters, setFilters] = useState<CascadingFilters>(initialFilters);
 
@@ -123,122 +127,141 @@ export default function CascadingFilter({
     });
 
     return (
-        <div className="flex flex-wrap gap-4">
-            {/* Program Filter - now independent (top level) */}
-            <FilterDropdown
-                model={programList}
-                value={filters.program}
-                placeholder="Program"
-                onSelect={(kode) => handleFilterChange('program', kode)}
-            />
-
-            {/* Kegiatan Filter - enabled only when program is selected */}
-            <div className="relative">
+        <div className="space-y-4">
+            <div className="flex flex-wrap gap-4">
+                {/* Program Filter - now independent (top level) */}
                 <FilterDropdown
-                    model={filters.program ? kegiatanList : []}
-                    value={filters.kegiatan}
-                    placeholder={'Kegiatan'}
-                    onSelect={
-                        filters.program
-                            ? (kode) => handleFilterChange('kegiatan', kode)
-                            : undefined
-                    }
+                    model={programList}
+                    value={filters.program}
+                    placeholder="Program"
+                    onSelect={(kode) => handleFilterChange('program', kode)}
                 />
-                {!filters.program && (
-                    <div className="absolute inset-0 cursor-not-allowed rounded bg-gray-100 bg-opacity-50" />
-                )}
-            </div>
 
-            {/* Sub Kegiatan Filter - enabled only when kegiatan is selected */}
-            <div className="relative">
+                {/* Kegiatan Filter - enabled only when program is selected */}
+                <div className="relative">
+                    <FilterDropdown
+                        model={filters.program ? kegiatanList : []}
+                        value={filters.kegiatan}
+                        placeholder={'Kegiatan'}
+                        onSelect={
+                            filters.program
+                                ? (kode) => handleFilterChange('kegiatan', kode)
+                                : undefined
+                        }
+                    />
+                    {!filters.program && (
+                        <div className="absolute inset-0 cursor-not-allowed rounded bg-gray-100 bg-opacity-50" />
+                    )}
+                </div>
+
+                {/* Sub Kegiatan Filter - enabled only when kegiatan is selected */}
+                <div className="relative">
+                    <FilterDropdown
+                        model={filters.kegiatan ? subKegiatanList : []}
+                        value={filters.subKegiatan}
+                        placeholder={'Sub Kegiatan'}
+                        onSelect={
+                            filters.kegiatan
+                                ? (kode) =>
+                                      handleFilterChange('subKegiatan', kode)
+                                : undefined
+                        }
+                    />
+                    {!filters.kegiatan && (
+                        <div className="absolute inset-0 cursor-not-allowed rounded bg-gray-100 bg-opacity-50" />
+                    )}
+                </div>
+
+                {/* SKPD Filter - independent of hierarchy */}
                 <FilterDropdown
-                    model={filters.kegiatan ? subKegiatanList : []}
-                    value={filters.subKegiatan}
-                    placeholder={'Sub Kegiatan'}
-                    onSelect={
-                        filters.kegiatan
-                            ? (kode) => handleFilterChange('subKegiatan', kode)
-                            : undefined
-                    }
+                    model={skpdList}
+                    value={filters.skpd}
+                    placeholder="SKPD"
+                    onSelect={(kode) => handleFilterChange('skpd', kode)}
                 />
-                {!filters.kegiatan && (
-                    <div className="absolute inset-0 cursor-not-allowed rounded bg-gray-100 bg-opacity-50" />
-                )}
-            </div>
 
-            {/* SKPD Filter - independent of hierarchy */}
-            <FilterDropdown
-                model={skpdList}
-                value={filters.skpd}
-                placeholder="SKPD"
-                onSelect={(kode) => handleFilterChange('skpd', kode)}
-            />
+                {/* Unit SKPD Filter - enabled only when SKPD is selected */}
+                <div className="relative">
+                    <FilterDropdown
+                        model={filters.skpd ? unitSkpdList : []}
+                        value={filters.unitSkpd}
+                        placeholder={'Unit SKPD'}
+                        onSelect={
+                            filters.skpd
+                                ? (kode) => handleFilterChange('unitSkpd', kode)
+                                : undefined
+                        }
+                    />
+                    {!filters.skpd && (
+                        <div className="absolute inset-0 cursor-not-allowed rounded bg-gray-100 bg-opacity-50" />
+                    )}
+                </div>
 
-            {/* Unit SKPD Filter - enabled only when SKPD is selected */}
-            <div className="relative">
+                {/* Sumber Dana Filter - independent */}
                 <FilterDropdown
-                    model={filters.skpd ? unitSkpdList : []}
-                    value={filters.unitSkpd}
-                    placeholder={'Unit SKPD'}
-                    onSelect={
-                        filters.skpd
-                            ? (kode) => handleFilterChange('unitSkpd', kode)
-                            : undefined
-                    }
+                    model={sumberDanaList}
+                    value={filters.sumberDana}
+                    placeholder="Sumber Dana"
+                    onSelect={(kode) => handleFilterChange('sumberDana', kode)}
+                    isWithCode={false}
                 />
-                {!filters.skpd && (
-                    <div className="absolute inset-0 cursor-not-allowed rounded bg-gray-100 bg-opacity-50" />
-                )}
-            </div>
 
-            {/* Sumber Dana Filter - independent */}
-            <FilterDropdown
-                model={sumberDanaList}
-                value={filters.sumberDana}
-                placeholder="Sumber Dana"
-                onSelect={(kode) => handleFilterChange('sumberDana', kode)}
-                isWithCode={false}
-            />
+                {/* Paket Filter - independent multi-select */}
+                <MultiSelectFilterDropdown
+                    model={paketList}
+                    value={filters.paket}
+                    placeholder="Paket"
+                    onSelect={(values) => handleFilterChange('paket', values)}
+                />
 
-            {/* Paket Filter - independent multi-select */}
-            <MultiSelectFilterDropdown
-                model={paketList}
-                value={filters.paket}
-                placeholder="Paket"
-                onSelect={(values) => handleFilterChange('paket', values)}
-            />
-
-            {/* Action Buttons */}
-            <CustomButton
-                variant="shadow"
-                className="flex items-center justify-center gap-2"
-                onClick={onShowDialog}
-            >
-                <span>Tampilkan</span>
-                <EyeIcon className="size-4" />
-            </CustomButton>
-
-            <CustomButton
-                variant="secondary"
-                className="flex items-center justify-center gap-2"
-                onClick={onExport}
-                disabled={visibleColumns.length === 0 || isLoading}
-            >
-                <span>{isLoading ? 'Mengunduh...' : 'Export Excel'}</span>
-                <Download className="size-4" />
-            </CustomButton>
-
-            {/* Reset Button */}
-            {hasActiveFilter && (
+                {/* Action Buttons */}
                 <CustomButton
-                    variant="outlined"
-                    className="border border-red-400 text-red-600"
-                    onClick={resetAllFilters}
+                    variant="shadow"
+                    className="flex items-center justify-center gap-2"
+                    onClick={onShowDialog}
+                >
+                    <span>Tampilkan</span>
+                    <EyeIcon className="size-4" />
+                </CustomButton>
+
+                <CustomButton
+                    variant="secondary"
+                    className="flex items-center justify-center gap-2"
+                    onClick={onExport}
+                    disabled={visibleColumns.length === 0 || isLoading}
+                >
+                    <span>{isLoading ? 'Mengunduh...' : 'Export Excel'}</span>
+                    <Download className="size-4" />
+                </CustomButton>
+
+                {/* Reset Button */}
+                {hasActiveFilter && (
+                    <CustomButton
+                        variant="outlined"
+                        className="border border-red-400 text-red-600"
+                        onClick={resetAllFilters}
+                        disabled={isLoading}
+                    >
+                        {isLoading ? 'Mereset...' : 'Reset Filter'}
+                    </CustomButton>
+                )}
+            </div>
+
+            {/* Per Page Selector */}
+            <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">Tampilkan:</span>
+                <select
+                    value={perPage}
+                    onChange={(e) => onPerPageChange(Number(e.target.value))}
+                    className="rounded border border-gray-300 px-3 py-1 pr-8 text-sm focus:border-main focus:outline-none focus:ring-1 focus:ring-main"
                     disabled={isLoading}
                 >
-                    {isLoading ? 'Mereset...' : 'Reset Filter'}
-                </CustomButton>
-            )}
+                    <option value={10}>10</option>
+                    <option value={50}>50</option>
+                    <option value={100}>100</option>
+                </select>
+                <span className="text-sm text-gray-600">data per halaman</span>
+            </div>
         </div>
     );
 }

@@ -22,6 +22,8 @@ Route::post('/input-dpa/filter', [InputDPAController::class, 'filter'])
     ->middleware(['auth', 'verified'])->name('inputdpa.filter');
 Route::post('/input-dpa/cascading-filter', [InputDPAController::class, 'cascadingFilter'])
     ->middleware(['auth', 'verified'])->name('inputdpa.cascading-filter');
+Route::post('/input-dpa/change-per-page', [InputDPAController::class, 'changePerPage'])
+    ->middleware(['auth', 'verified'])->name('inputdpa.change-per-page');
 Route::post('/input-dpa/reset', [InputDPAController::class, 'reset'])
     ->middleware(['auth', 'verified'])->name('inputdpa.reset');
 Route::get('/input-dpa/export', [InputDPAController::class, 'export'])

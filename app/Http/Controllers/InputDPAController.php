@@ -21,6 +21,18 @@ class InputDPAController extends Controller
             'paket' => [],
         ]);
 
+        // Get per_page preference from session or request, default to 10
+        $perPage = $request->input('per_page', session('pagination.per_page', 10));
+
+        // Validate per_page value
+        $allowedPerPage = [10, 50, 100];
+        if (!in_array($perPage, $allowedPerPage)) {
+            $perPage = 10;
+        }
+
+        // Store per_page preference in session
+        session(['pagination.per_page' => $perPage]);
+
         $query = TrxBelanja::with([
             'subKegiatan.kegiatan.program.bidang.urusan',
             'unitSkpd.skpd',
@@ -67,7 +79,7 @@ class InputDPAController extends Controller
             $query->whereIn('paket', $filters['paket']);
         }
 
-        $data = $query->orderBy('id')->paginate(10);
+        $data = $query->orderBy('id')->paginate($perPage);
 
         $rows = collect($data->items())->map(function ($item) {
             return [
@@ -116,6 +128,7 @@ class InputDPAController extends Controller
                 'total' => $data->total(),
                 'links' => $data->linkCollection(),
             ],
+            'perPage' => $perPage,
             'grandTotal' => $grandTotal,
             'cascadingFilters' => $filters,
             'programList' => $filterOptions['programList'],
@@ -310,6 +323,22 @@ class InputDPAController extends Controller
             'cascading_filters.sumberDana' => $request->input('sumberDana'),
             'cascading_filters.paket' => $request->input('paket', []),
         ]);
+
+        return redirect()->route('inputdpa');
+    }
+
+    public function changePerPage(Request $request)
+    {
+        $perPage = $request->input('per_page', 10);
+
+        // Validate per_page value
+        $allowedPerPage = [10, 50, 100];
+        if (!in_array($perPage, $allowedPerPage)) {
+            $perPage = 10;
+        }
+
+        // Store per_page preference in session
+        session(['pagination.per_page' => $perPage]);
 
         return redirect()->route('inputdpa');
     }
