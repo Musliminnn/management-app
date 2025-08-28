@@ -1,50 +1,55 @@
+import { useAuth } from '@/hooks';
 import { ParentLayout } from '@/Layouts/MainLayout';
-import { RoleEnum } from '@/types/enums';
-import { usePage } from '@inertiajs/react';
 
 export default function Dashboard() {
-    const { auth } = usePage().props;
-    const user = auth?.user;
+    // Use auth hook instead of usePage
+    const { user, isSuperadmin, isAdmin, isBPP, isPAKPA } = useAuth();
 
     return (
         <ParentLayout>
-            {user?.role?.name === RoleEnum.Superadmin && (
+            {isSuperadmin() && (
                 <div className="py-12">
                     <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                         <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                             <div className="p-6 text-gray-900">
-                                Role Superadmin
+                                Role Superadmin - Welcome {user?.name}!
                             </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            {user?.role?.name === RoleEnum.Admin && (
+            {isAdmin() && (
                 <div className="py-12">
                     <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                         <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                            <div className="p-6 text-gray-900">Role Admin</div>
+                            <div className="p-6 text-gray-900">
+                                Role Admin - Welcome {user?.name}!
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            {user?.role?.name === RoleEnum.BPP && (
+            {isBPP() && (
                 <div className="py-12">
                     <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                         <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                            <div className="p-6 text-gray-900">Role BPP</div>
+                            <div className="p-6 text-gray-900">
+                                Role BPP - Welcome {user?.name}!
+                            </div>
                         </div>
                     </div>
                 </div>
             )}
 
-            {user?.role?.name === RoleEnum.PAKPA && (
+            {isPAKPA() && (
                 <div className="py-12">
                     <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
                         <div className="overflow-hidden bg-white shadow-sm sm:rounded-lg">
-                            <div className="p-6 text-gray-900">Role PA KPA</div>
+                            <div className="p-6 text-gray-900">
+                                Role PA KPA - Welcome {user?.name}!
+                            </div>
                         </div>
                     </div>
                 </div>

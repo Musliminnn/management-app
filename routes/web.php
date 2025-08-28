@@ -9,10 +9,6 @@ use Inertia\Inertia;
 
 Route::get('/', RootRedirectController::class);
 Route::prefix('import')->group(function () {
-    Route::get('/file-pages', function () {
-        return Inertia::render('ImportFile');
-    })->name('import.file.pages');
-
     Route::post('/file', [ImportController::class, 'import'])->name('import.file');
 });
 

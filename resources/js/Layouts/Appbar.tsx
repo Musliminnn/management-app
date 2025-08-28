@@ -1,5 +1,5 @@
 import Dropdown from '@/Components/Dropdown';
-import { usePage } from '@inertiajs/react';
+import { useAuth } from '@/hooks';
 import { Menu } from 'lucide-react';
 import ApplicationLogo from '../Components/ApplicationLogo';
 
@@ -9,8 +9,7 @@ interface AppbarProps {
 }
 
 export const Appbar = ({ onToggleSidebar }: AppbarProps) => {
-    const { auth } = usePage().props;
-    const user = auth?.user;
+    const { user, logout } = useAuth();
     return (
         <header className="flex h-16 w-full items-center justify-between bg-white px-4 shadow">
             <div className="flex items-center gap-5">
@@ -38,23 +37,19 @@ export const Appbar = ({ onToggleSidebar }: AppbarProps) => {
                                     className="inline-flex items-center rounded-md border border-transparent bg-white px-3 py-2 text-sm font-medium leading-4 text-gray-500 transition duration-150 ease-in-out hover:text-gray-700 focus:outline-none"
                                 >
                                     <span className="hidden text-sm text-gray-700 sm:block">
-                                        Hello, {user.name}
+                                        Hello, {user?.name}
                                     </span>
-                                    <div className="h-8 w-8 rounded-full bg-gray-300 mx-1" />
-
-                                    
+                                    <div className="mx-1 h-8 w-8 rounded-full bg-gray-300" />
                                 </button>
                             </span>
                         </Dropdown.Trigger>
 
                         <Dropdown.Content>
-                            {/* <Dropdown.Link href={route('profile.edit')}>
-                                Profile
-                            </Dropdown.Link> */}
                             <Dropdown.Link
                                 href={route('logout')}
                                 method="post"
                                 as="button"
+                                onStart={() => logout()}
                             >
                                 Log Out
                             </Dropdown.Link>

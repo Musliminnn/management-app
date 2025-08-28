@@ -2,19 +2,42 @@ import CustomButton from '@/Components/CustomButton';
 import CascadingFilter from '@/Components/InputDPA/CascadingFilter';
 import UploadDPA from '@/Components/InputDPA/UploadDPA';
 import { formatCurrency } from '@/helper/currency';
+import { useFilters } from '@/hooks';
 import { ParentLayout } from '@/Layouts/MainLayout';
-import { Link, router, usePage } from '@inertiajs/react';
-import { useEffect, useState } from 'react';
+import { useDataTableStore, useUIStore } from '@/stores';
+import { router } from '@inertiajs/react';
 
 export default function InputDPA() {
-    const [isLoading, setIsLoading] = useState(false);
-    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    // Use Zustand stores
+    const { isLoading, modals, openModal, closeModal, setLoading } =
+        useUIStore();
+    const {
+        data,
+        grandTotal,
+        pagination,
+        visibleColumns,
+        setVisibleColumns,
+        getTotalValue,
+    } = useDataTableStore();
+
+    const {
+        cascadingFilters,
+        legacyFilters,
+        filterOptions,
+        hasActiveFilter,
+        filterKey,
+        applyCascadingFilters,
+        applyLegacyFilters,
+        clearAllFilters,
+    } = useFilters();
+
+    const isDialogOpen = modals.uploadDialog || false;
 
     // Function to calculate total harga from all data (not just current page)
     const calculateTotalHarga = () => {
         // If backend provides grand total, use it
-        if (props.grandTotal) {
-            return props.grandTotal;
+        if (grandTotal) {
+            return grandTotal;
         }
 
         // Otherwise, calculate from current page data (fallback)
@@ -26,100 +49,21 @@ export default function InputDPA() {
         }, 0);
     };
 
-    // Legacy filters (for backward compatibility)
-    const [filters, setFilters] = useState<{
-        program: string | null;
-        subKegiatan: string | null;
-        sumberDana: string | null;
-    }>({
-        program: null,
-        subKegiatan: null,
-        sumberDana: null,
-    });
-
-    const page = usePage();
-    const props = usePage().props as any;
-
-    // Use cascading filters if available, otherwise fall back to legacy filters
-    const cascadingFilters = props.cascadingFilters || {
-        program: null,
-        kegiatan: null,
-        subKegiatan: null,
-        skpd: null,
-        unitSkpd: null,
-    };
-
-    const filterKey = props.cascadingFilters
-        ? `${cascadingFilters.program ?? ''}-${cascadingFilters.kegiatan ?? ''}-${cascadingFilters.subKegiatan ?? ''}-${cascadingFilters.skpd ?? ''}-${cascadingFilters.unitSkpd ?? ''}`
-        : `${props.filters?.program ?? ''}-${props.filters?.subKegiatan ?? ''}-${props.filters?.sumberDana ?? ''}`;
-
-    const data = (page.props as any).data as Record<string, any>[];
-    const pagination = (page.props as any).pagination;
-    const perPage = (page.props as any).perPage || 10;
-
-    // Get filter lists - use cascading if available
-    const programList = (page.props as any).programList || [];
-    const kegiatanList = (page.props as any).kegiatanList || [];
-    const subKegiatanList = (page.props as any).subKegiatanList || [];
-    const skpdList = (page.props as any).skpdList || [];
-    const unitSkpdList = (page.props as any).unitSkpdList || [];
-
     const columns = data.length > 0 ? Object.keys(data[0]) : [];
-    const [visibleColumns, setVisibleColumns] = useState<string[]>(columns);
 
-    const hasActiveFilter = props.cascadingFilters
-        ? Object.entries(cascadingFilters).some(
-              ([key, value]: [string, any]) => {
-                  return value !== null;
-              },
-          )
-        : filters.program !== null ||
-          filters.subKegiatan !== null ||
-          filters.sumberDana !== null;
-
-    const handleFilterChange = (
-        key: keyof typeof filters,
-        value: string | null,
-    ) => {
+    const handleFilterChange = (key: string, value: string | null) => {
         const newFilters = {
-            ...filters,
             [key]: value,
         };
-        setFilters(newFilters);
-        setIsLoading(true);
-
-        router.post(route('inputdpa.filter'), newFilters, {
-            preserveScroll: true,
-            preserveState: false,
-            replace: true,
-            onFinish: () => {
-                setIsLoading(false);
-            },
-        });
+        applyLegacyFilters(newFilters);
     };
 
     const resetAllFilters = () => {
-        setIsLoading(true);
-        setFilters({
-            program: null,
-            subKegiatan: null,
-            sumberDana: null,
-        });
-
-        router.post(
-            route('inputdpa.reset'),
-            {},
-            {
-                preserveScroll: true,
-                preserveState: false,
-                replace: true,
-                onFinish: () => setIsLoading(false),
-            },
-        );
+        clearAllFilters();
     };
 
     const handleExport = () => {
-        setIsLoading(true);
+        setLoading(true, 'Exporting data...');
 
         const params = new URLSearchParams();
         visibleColumns.forEach((col) => {
@@ -129,45 +73,26 @@ export default function InputDPA() {
         const url = `${route('inputdpa.export')}?${params.toString()}`;
         window.open(url, '_blank');
 
-        setTimeout(() => setIsLoading(false), 1000);
+        setTimeout(() => setLoading(false), 1000);
     };
 
     const onPageChange = (pageUrl: string) => {
-        const urlObj = new URL(pageUrl);
-        const page = urlObj.searchParams.get('page');
+        setLoading(true, 'Loading page...');
 
-        setIsLoading(true);
-        router.visit(route('inputdpa'), {
-            data: { page },
+        // Use Inertia router for navigation
+        router.visit(pageUrl, {
             preserveScroll: true,
-            preserveState: true,
+            preserveState: false,
             replace: true,
-            only: ['data', 'pagination', 'programList', 'subKegiatanList'],
-            onFinish: () => setIsLoading(false),
+            onFinish: () => {
+                setLoading(false);
+            },
+            onError: (errors) => {
+                console.error('Navigation error:', errors);
+                setLoading(false);
+            },
         });
     };
-
-    const handlePerPageChange = (newPerPage: number) => {
-        setIsLoading(true);
-        router.post(
-            route('inputdpa.change-per-page'),
-            { per_page: newPerPage },
-            {
-                preserveScroll: true,
-                preserveState: false,
-                replace: true,
-                onFinish: () => setIsLoading(false),
-            },
-        );
-    };
-
-    useEffect(() => {
-        const initialFilters =
-            (page.props as any).filters || (page.props as any).cascadingFilters;
-        if ((page.props as any).filters) {
-            setFilters(initialFilters);
-        }
-    }, [page.props]);
 
     return (
         <ParentLayout key={filterKey}>
@@ -177,17 +102,17 @@ export default function InputDPA() {
                     <div className="mb-5">
                         <CascadingFilter
                             initialFilters={cascadingFilters}
-                            programList={programList}
-                            kegiatanList={kegiatanList}
-                            subKegiatanList={subKegiatanList}
-                            skpdList={skpdList}
-                            unitSkpdList={unitSkpdList}
+                            programList={filterOptions.programList}
+                            kegiatanList={filterOptions.kegiatanList}
+                            subKegiatanList={filterOptions.subKegiatanList}
+                            skpdList={filterOptions.skpdList}
+                            unitSkpdList={filterOptions.unitSkpdList}
                             visibleColumns={visibleColumns}
                             isLoading={isLoading}
-                            perPage={perPage}
-                            onShowDialog={() => setIsDialogOpen(true)}
+                            perPage={pagination.perPage}
+                            onShowDialog={() => openModal('uploadDialog')}
                             onExport={handleExport}
-                            onPerPageChange={handlePerPageChange}
+                            onPerPageChange={() => {}} // Disabled for now
                         />
                     </div>
                 )}
@@ -261,7 +186,7 @@ export default function InputDPA() {
                                 <CustomButton
                                     variant="primary"
                                     onClick={() => {
-                                        setIsDialogOpen(false);
+                                        closeModal('uploadDialog');
                                     }}
                                 >
                                     Simpan
@@ -364,17 +289,21 @@ export default function InputDPA() {
                         </div>
                     </>
                 )}
-                {data.length !== 0 && (
+
+                {/* Laravel Pagination */}
+                {data.length !== 0 && pagination.links && (
                     <div className="mt-4 flex justify-center gap-2">
                         {pagination.links.map((link: any, i: number) => {
                             return (
-                                <Link
+                                <button
                                     key={i}
-                                    href="#"
                                     onClick={(e) => {
                                         e.preventDefault();
-                                        if (link.url) onPageChange(link.url);
+                                        if (link.url) {
+                                            onPageChange(link.url);
+                                        }
                                     }}
+                                    disabled={!link.url}
                                     className={`rounded border px-3 py-1 text-sm ${
                                         link.active
                                             ? 'bg-main text-white'
