@@ -138,12 +138,6 @@ class ImportOptimizationService
             $akun = DB::table('ref_akun')->pluck('nama', 'kode')->toArray();
             Cache::put('ref_akun_codes', $akun, $cacheTime);
         }
-
-        // Cache Standar Harga data
-        if (!Cache::has('ref_standar_harga_codes')) {
-            $standarHarga = DB::table('ref_standar_harga')->pluck('nama', 'kode')->toArray();
-            Cache::put('ref_standar_harga_codes', $standarHarga, $cacheTime);
-        }
     }
 
     /**
@@ -160,7 +154,6 @@ class ImportOptimizationService
             'ref_skpd_codes',
             'ref_unit_skpd_codes',
             'ref_akun_codes',
-            'ref_standar_harga_codes'
         ];
 
         foreach ($keys as $key) {

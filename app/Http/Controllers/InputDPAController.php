@@ -17,8 +17,6 @@ class InputDPAController extends Controller
             'subKegiatan' => null,
             'skpd' => null,
             'unitSkpd' => null,
-            'sumberDana' => null,
-            'paket' => [],
         ]);
 
         // Get per_page preference from session or request, default to 10
@@ -37,7 +35,6 @@ class InputDPAController extends Controller
             'subKegiatan.kegiatan.program.bidang.urusan',
             'unitSkpd.skpd',
             'akun',
-            'standarHarga',
         ]);
 
         // Apply cascading filters
@@ -71,14 +68,6 @@ class InputDPAController extends Controller
             });
         }
 
-        if ($filters['sumberDana']) {
-            $query->where('sumber_dana', $filters['sumberDana']);
-        }
-
-        if (!empty($filters['paket']) && is_array($filters['paket'])) {
-            $query->whereIn('paket', $filters['paket']);
-        }
-
         $data = $query->orderBy('id')->paginate($perPage);
 
         $rows = collect($data->items())->map(function ($item) {
@@ -99,12 +88,12 @@ class InputDPAController extends Controller
                 'nama_unit_skpd'      => $item->unitSkpd->nama ?? null,
                 'kode_akun'           => $item->akun->kode ?? null,
                 'nama_akun'           => $item->akun->nama ?? null,
-                'paket'               => $item->paket,
-                'keterangan_belanja'  => $item->keterangan_belanja,
-                'sumber_dana'         => $item->sumber_dana,
-                'nama_penerima'       => $item->nama_penerima,
-                'kode_standar_harga'  => $item->standarHarga->kode ?? null,
-                'nama_standar_harga'  => $item->standarHarga->nama ?? null,
+                'paket'               => $item->akun->paket ?? null,
+                'keterangan_belanja'  => $item->akun->keterangan_belanja ?? null,
+                'sumber_dana'         => $item->akun->sumber_dana ?? null,
+                'nama_penerima'       => $item->akun->nama_penerima ?? null,
+                'kode_standar_harga'  => $item->kode ?? null,
+                'nama_standar_harga'  => $item->nama ?? null,
                 'spesifikasi'         => $item->spesifikasi,
                 'koefisien'           => $item->koefisien,
                 'harga_satuan'        => $item->harga_satuan,
@@ -136,8 +125,6 @@ class InputDPAController extends Controller
             'subKegiatanList' => $filterOptions['subKegiatanList'],
             'skpdList' => $filterOptions['skpdList'],
             'unitSkpdList' => $filterOptions['unitSkpdList'],
-            'sumberDanaList' => $filterOptions['sumberDanaList'],
-            'paketList' => $filterOptions['paketList'],
         ]);
     }
 
@@ -174,14 +161,6 @@ class InputDPAController extends Controller
             $grandTotalQuery->whereHas('unitSkpd', function ($q) use ($filters) {
                 $q->where('kode', $filters['unitSkpd']);
             });
-        }
-
-        if ($filters['sumberDana']) {
-            $grandTotalQuery->where('sumber_dana', $filters['sumberDana']);
-        }
-
-        if (!empty($filters['paket']) && is_array($filters['paket'])) {
-            $grandTotalQuery->whereIn('paket', $filters['paket']);
         }
 
         return $grandTotalQuery->sum('total_harga');
@@ -273,42 +252,12 @@ class InputDPAController extends Controller
                 ]);
         }
 
-        // Get all available Sumber Dana (independent)
-        $sumberDanaList = collect();
-        if (TrxBelanja::count() > 0) {
-            $sumberDanaList = TrxBelanja::distinct()
-                ->pluck('sumber_dana')
-                ->filter()
-                ->unique()
-                ->values()
-                ->map(fn($val) => [
-                    'kode' => $val,
-                    'nama' => $val,
-                ]);
-        }
-
-        // Get all available Paket (independent, uppercase for display)
-        $paketList = collect();
-        if (TrxBelanja::count() > 0) {
-            $paketList = TrxBelanja::distinct()
-                ->pluck('paket')
-                ->filter()
-                ->unique()
-                ->values()
-                ->map(fn($val) => [
-                    'kode' => $val, // Keep original value for filtering
-                    'nama' => strtoupper($val), // Display in uppercase
-                ]);
-        }
-
         return [
             'programList' => $programList,
             'kegiatanList' => $kegiatanList,
             'subKegiatanList' => $subKegiatanList,
             'skpdList' => $skpdList,
             'unitSkpdList' => $unitSkpdList,
-            'sumberDanaList' => $sumberDanaList,
-            'paketList' => $paketList,
         ];
     }
 
@@ -320,8 +269,6 @@ class InputDPAController extends Controller
             'cascading_filters.subKegiatan' => $request->input('subKegiatan'),
             'cascading_filters.skpd' => $request->input('skpd'),
             'cascading_filters.unitSkpd' => $request->input('unitSkpd'),
-            'cascading_filters.sumberDana' => $request->input('sumberDana'),
-            'cascading_filters.paket' => $request->input('paket', []),
         ]);
 
         return redirect()->route('inputdpa');
@@ -370,15 +317,12 @@ class InputDPAController extends Controller
             'subKegiatan' => null,
             'skpd' => null,
             'unitSkpd' => null,
-            'sumberDana' => null,
-            'paket' => [],
         ]);
 
         $query = TrxBelanja::with([
             'subKegiatan.kegiatan.program.bidang.urusan',
             'unitSkpd.skpd',
             'akun',
-            'standarHarga',
         ]);
 
         // Apply cascading filters
@@ -412,14 +356,6 @@ class InputDPAController extends Controller
             });
         }
 
-        if ($filters['sumberDana']) {
-            $query->where('sumber_dana', $filters['sumberDana']);
-        }
-
-        if (!empty($filters['paket']) && is_array($filters['paket'])) {
-            $query->whereIn('paket', $filters['paket']);
-        }
-
         $data = $query->orderBy('id')->get();
 
         $rows = collect($data)->map(function ($item) {
@@ -440,12 +376,12 @@ class InputDPAController extends Controller
                 'nama_unit_skpd'      => $item->unitSkpd->nama ?? null,
                 'kode_akun'           => $item->akun->kode ?? null,
                 'nama_akun'           => $item->akun->nama ?? null,
-                'paket'               => $item->paket,
-                'keterangan_belanja'  => $item->keterangan_belanja,
-                'sumber_dana'         => $item->sumber_dana,
-                'nama_penerima'       => $item->nama_penerima,
-                'kode_standar_harga'  => $item->standarHarga->kode ?? null,
-                'nama_standar_harga'  => $item->standarHarga->nama ?? null,
+                'paket'               => $item->akun->paket ?? null,
+                'keterangan_belanja'  => $item->akun->keterangan_belanja ?? null,
+                'sumber_dana'         => $item->akun->sumber_dana ?? null,
+                'nama_penerima'       => $item->akun->nama_penerima ?? null,
+                'kode_standar_harga'  => $item->kode ?? null,
+                'nama_standar_harga'  => $item->nama ?? null,
                 'spesifikasi'         => $item->spesifikasi,
                 'koefisien'           => $item->koefisien,
                 'harga_satuan'        => $item->harga_satuan,

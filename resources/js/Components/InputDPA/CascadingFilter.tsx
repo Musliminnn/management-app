@@ -1,6 +1,5 @@
 import CustomButton from '@/Components/CustomButton';
 import { FilterDropdown } from '@/Components/InputDPA/FilterDropdown';
-import { MultiSelectFilterDropdown } from '@/Components/InputDPA/MultiSelectFilterDropdown';
 import { router } from '@inertiajs/react';
 import { Download, EyeIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -16,8 +15,6 @@ type CascadingFilters = {
     subKegiatan: string | null;
     skpd: string | null;
     unitSkpd: string | null;
-    sumberDana: string | null;
-    paket: string[];
 };
 
 type Props = {
@@ -27,8 +24,6 @@ type Props = {
     subKegiatanList: FilterData[];
     skpdList: FilterData[];
     unitSkpdList: FilterData[];
-    sumberDanaList: FilterData[];
-    paketList: FilterData[];
     visibleColumns: string[];
     isLoading: boolean;
     perPage: number;
@@ -44,8 +39,6 @@ export default function CascadingFilter({
     subKegiatanList,
     skpdList,
     unitSkpdList,
-    sumberDanaList,
-    paketList,
     visibleColumns,
     isLoading,
     perPage,
@@ -103,8 +96,6 @@ export default function CascadingFilter({
             subKegiatan: null,
             skpd: null,
             unitSkpd: null,
-            sumberDana: null,
-            paket: [],
         };
 
         setFilters(resetFilters);
@@ -120,9 +111,6 @@ export default function CascadingFilter({
         );
     };
     const hasActiveFilter = Object.entries(filters).some(([key, value]) => {
-        if (key === 'paket') {
-            return Array.isArray(value) && value.length > 0;
-        }
         return value !== null;
     });
 
@@ -196,23 +184,6 @@ export default function CascadingFilter({
                         <div className="absolute inset-0 cursor-not-allowed rounded bg-gray-100 bg-opacity-50" />
                     )}
                 </div>
-
-                {/* Sumber Dana Filter - independent */}
-                <FilterDropdown
-                    model={sumberDanaList}
-                    value={filters.sumberDana}
-                    placeholder="Sumber Dana"
-                    onSelect={(kode) => handleFilterChange('sumberDana', kode)}
-                    isWithCode={false}
-                />
-
-                {/* Paket Filter - independent multi-select */}
-                <MultiSelectFilterDropdown
-                    model={paketList}
-                    value={filters.paket}
-                    placeholder="Paket"
-                    onSelect={(values) => handleFilterChange('paket', values)}
-                />
 
                 {/* Action Buttons */}
                 <CustomButton

@@ -10,7 +10,6 @@ use App\Models\RefSubKegiatan;
 use App\Models\RefSkpd;
 use App\Models\RefUnitSkpd;
 use App\Models\RefAkun;
-use App\Models\RefStandarHarga;
 use App\Services\ImportOptimizationService;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Cache;
@@ -32,7 +31,6 @@ class MasterDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, S
         'skpd' => [],
         'unit_skpd' => [],
         'akun' => [],
-        'standar_harga' => [],
     ];
 
     // Cache Redis untuk validasi
@@ -56,7 +54,6 @@ class MasterDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, S
             'skpd' => Cache::get('ref_skpd_codes', []),
             'unit_skpd' => Cache::get('ref_unit_skpd_codes', []),
             'akun' => Cache::get('ref_akun_codes', []),
-            'standar_harga' => Cache::get('ref_standar_harga_codes', []),
         ];
     }
 
@@ -67,8 +64,7 @@ class MasterDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, S
         try {
             if (
                 empty($r['KODE URUSAN']) || empty($r['KODE PROGRAM']) ||
-                empty($r['KODE SKPD']) || empty($r['KODE AKUN']) ||
-                empty($r['KODE STANDAR HARGA'])
+                empty($r['KODE SKPD']) || empty($r['KODE AKUN'])
             ) {
                 Log::info('Baris dilewati karena field penting kosong', $r);
                 return;
@@ -161,18 +157,13 @@ class MasterDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, S
             if (!isset($this->cache['akun'][$r['KODE AKUN']])) {
                 RefAkun::firstOrCreate(
                     ['kode' => $r['KODE AKUN']],
-                    ['nama' => $r['NAMA AKUN'] ?? '']
+                    ['nama' => $r['NAMA AKUN'] ?? ''],
+                    ['paket' => $r['PAKET/KELOMPOK BELANJA/TAGGING (#)'] ?? '-'],
+                    ['keterangan_belanja' => $r['KETERANGAN BELANJA/AKTIVITAS (-)'] ?? '-'],
+                    ['sumber_dana' => $r['SUMBER DANA'] ?? '-'],
+                    ['nama_penerima' => $r['NAMA PENERIMA BANTUAN'] ?? '-'],
                 );
                 $this->cache['akun'][$r['KODE AKUN']] = true;
-            }
-
-            // === RefStandarHarga ===
-            if (!isset($this->cache['standar_harga'][$r['KODE STANDAR HARGA']])) {
-                RefStandarHarga::firstOrCreate(
-                    ['kode' => $r['KODE STANDAR HARGA']],
-                    ['nama' => $r['NAMA STANDAR HARGA'] ?? '']
-                );
-                $this->cache['standar_harga'][$r['KODE STANDAR HARGA']] = true;
             }
         } catch (\Throwable $e) {
             Log::error('Gagal parsing row MasterDataImport', [

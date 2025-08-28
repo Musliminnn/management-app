@@ -12,11 +12,8 @@ class TrxBelanja extends Model
         'kode_sub_kegiatan',
         'kode_unit_skpd',
         'kode_akun',
-        'kode_standar_harga',
-        'paket',
-        'keterangan_belanja',
-        'sumber_dana',
-        'nama_penerima',
+        'kode',
+        'nama',
         'spesifikasi',
         'koefisien',
         'harga_satuan',
@@ -37,10 +34,5 @@ class TrxBelanja extends Model
     public function akun()
     {
         return $this->belongsTo(RefAkun::class, 'kode_akun', 'kode');
-    }
-
-    public function standarHarga()
-    {
-        return $this->belongsTo(RefStandarHarga::class, 'kode_standar_harga', 'kode');
     }
 }

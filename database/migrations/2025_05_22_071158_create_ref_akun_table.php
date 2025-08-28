@@ -15,6 +15,10 @@ return new class extends Migration
             $table->engine = 'InnoDB';
             $table->string('kode', 100)->primary();
             $table->string('nama', 200);
+            $table->string('paket')->nullable();
+            $table->string('keterangan_belanja')->nullable();
+            $table->string('sumber_dana')->nullable();
+            $table->string('nama_penerima')->nullable();
             $table->timestamps();
         });
     }

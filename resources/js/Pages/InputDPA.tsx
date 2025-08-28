@@ -47,12 +47,10 @@ export default function InputDPA() {
         subKegiatan: null,
         skpd: null,
         unitSkpd: null,
-        sumberDana: null,
-        paket: [],
     };
 
     const filterKey = props.cascadingFilters
-        ? `${cascadingFilters.program ?? ''}-${cascadingFilters.kegiatan ?? ''}-${cascadingFilters.subKegiatan ?? ''}-${cascadingFilters.skpd ?? ''}-${cascadingFilters.unitSkpd ?? ''}-${cascadingFilters.sumberDana ?? ''}-${cascadingFilters.paket?.join(',') ?? ''}`
+        ? `${cascadingFilters.program ?? ''}-${cascadingFilters.kegiatan ?? ''}-${cascadingFilters.subKegiatan ?? ''}-${cascadingFilters.skpd ?? ''}-${cascadingFilters.unitSkpd ?? ''}`
         : `${props.filters?.program ?? ''}-${props.filters?.subKegiatan ?? ''}-${props.filters?.sumberDana ?? ''}`;
 
     const data = (page.props as any).data as Record<string, any>[];
@@ -65,8 +63,6 @@ export default function InputDPA() {
     const subKegiatanList = (page.props as any).subKegiatanList || [];
     const skpdList = (page.props as any).skpdList || [];
     const unitSkpdList = (page.props as any).unitSkpdList || [];
-    const sumberDanaList = (page.props as any).sumberDanaList || [];
-    const paketList = (page.props as any).paketList || [];
 
     const columns = data.length > 0 ? Object.keys(data[0]) : [];
     const [visibleColumns, setVisibleColumns] = useState<string[]>(columns);
@@ -74,9 +70,6 @@ export default function InputDPA() {
     const hasActiveFilter = props.cascadingFilters
         ? Object.entries(cascadingFilters).some(
               ([key, value]: [string, any]) => {
-                  if (key === 'paket') {
-                      return Array.isArray(value) && value.length > 0;
-                  }
                   return value !== null;
               },
           )
@@ -149,13 +142,7 @@ export default function InputDPA() {
             preserveScroll: true,
             preserveState: true,
             replace: true,
-            only: [
-                'data',
-                'pagination',
-                'programList',
-                'subKegiatanList',
-                'sumberDanaList',
-            ],
+            only: ['data', 'pagination', 'programList', 'subKegiatanList'],
             onFinish: () => setIsLoading(false),
         });
     };
@@ -195,8 +182,6 @@ export default function InputDPA() {
                             subKegiatanList={subKegiatanList}
                             skpdList={skpdList}
                             unitSkpdList={unitSkpdList}
-                            sumberDanaList={sumberDanaList}
-                            paketList={paketList}
                             visibleColumns={visibleColumns}
                             isLoading={isLoading}
                             perPage={perPage}

@@ -11,7 +11,14 @@ class RefAkun extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
-    protected $fillable = ['kode', 'nama'];
+    protected $fillable = [
+        'kode',
+        'nama',
+        'paket',
+        'keterangan_belanja',
+        'sumber_dana',
+        'nama_penerima',
+    ];
 
     public function belanja()
     {

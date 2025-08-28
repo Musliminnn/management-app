@@ -27,15 +27,8 @@ return new class extends Migration
             $table->foreign('kode_akun')->references('kode')->on('ref_akun')
                 ->onUpdate('cascade')->onDelete('restrict');
 
-            $table->string('kode_standar_harga', 100)->nullable();
-            $table->foreign('kode_standar_harga')->references('kode')->on('ref_standar_harga')
-                ->onUpdate('cascade')->onDelete('set null');
-
-            $table->string('paket')->nullable();
-            $table->string('keterangan_belanja')->nullable();
-            $table->string('sumber_dana')->nullable();
-            $table->string('nama_penerima')->nullable();
-
+            $table->string('kode', 100);
+            $table->string('nama', 200);
             $table->text('spesifikasi')->nullable();
             $table->string('koefisien')->nullable();
             $table->decimal('harga_satuan', 20, 2)->nullable();
