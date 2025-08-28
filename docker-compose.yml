@@ -63,6 +63,21 @@ services:
         environment:
             - CONTAINER_ROLE=queue
 
+    phpmyadmin:
+        image: phpmyadmin:latest
+        container_name: laravel_phpmyadmin
+        restart: unless-stopped
+        ports:
+            - '127.0.0.1:8081:80'
+        environment:
+            PMA_HOST: mysql
+            PMA_PORT: 3306
+            UPLOAD_LIMIT: 64M
+        depends_on:
+            - mysql
+        networks:
+            - laravel
+
 networks:
     laravel:
         driver: bridge
