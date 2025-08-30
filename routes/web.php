@@ -3,6 +3,7 @@
 use App\Http\Controllers\RootRedirectController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\InputDPAController;
+use App\Http\Controllers\RealisasiBelanjaController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -23,6 +24,16 @@ Route::post('/input-dpa/reset', [InputDPAController::class, 'reset'])
     ->middleware(['auth', 'verified'])->name('inputdpa.reset');
 Route::get('/input-dpa/export', [InputDPAController::class, 'export'])
     ->middleware(['auth', 'verified'])->name('inputdpa.export');
+
+// Realisasi Belanja Routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::resource('realisasi-belanja', RealisasiBelanjaController::class);
+    Route::get('/realisasi-belanja/sub-kegiatan/{kodeKegiatan}', [RealisasiBelanjaController::class, 'getSubKegiatan'])
+        ->name('realisasi-belanja.sub-kegiatan');
+    Route::get('/realisasi-belanja/trx-belanja/{kodeAkun}', [RealisasiBelanjaController::class, 'getTrxBelanjaData'])
+        ->name('realisasi-belanja.trx-belanja');
+});
+
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');

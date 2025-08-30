@@ -10,7 +10,7 @@ export const Sidebar = () => {
         { label: 'Dashboard', path: '/dashboard' },
         { label: 'Belanja Barang & Jasa', path: '/settings' },
         { label: 'Input DPA', path: '/input-dpa' },
-        { label: 'Input Realisasi Belanja', path: '/settings' },
+        { label: 'Input Realisasi Belanja', path: '/realisasi-belanja' },
         { label: 'Laporan Realisasi Belanja', path: '/profile' },
         { label: 'Belanja Pegawai', path: '/belanja' },
         { label: 'Upload & Verifikasi Gaji', path: '/settings' },
