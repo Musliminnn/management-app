@@ -158,10 +158,6 @@ class MasterDataImport implements OnEachRow, WithHeadingRow, WithChunkReading, S
                 RefAkun::firstOrCreate(
                     ['kode' => $r['KODE AKUN']],
                     ['nama' => $r['NAMA AKUN'] ?? ''],
-                    ['paket' => $r['PAKET/KELOMPOK BELANJA/TAGGING (#)'] ?? '-'],
-                    ['keterangan_belanja' => $r['KETERANGAN BELANJA/AKTIVITAS (-)'] ?? '-'],
-                    ['sumber_dana' => $r['SUMBER DANA'] ?? '-'],
-                    ['nama_penerima' => $r['NAMA PENERIMA BANTUAN'] ?? '-'],
                 );
                 $this->cache['akun'][$r['KODE AKUN']] = true;
             }

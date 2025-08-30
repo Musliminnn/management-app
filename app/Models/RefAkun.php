@@ -14,10 +14,6 @@ class RefAkun extends Model
     protected $fillable = [
         'kode',
         'nama',
-        'paket',
-        'keterangan_belanja',
-        'sumber_dana',
-        'nama_penerima',
     ];
 
     public function belanja()

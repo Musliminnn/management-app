@@ -29,6 +29,10 @@ return new class extends Migration
 
             $table->string('kode', 100);
             $table->string('nama', 200);
+            $table->string('paket')->nullable();
+            $table->string('keterangan_belanja')->nullable();
+            $table->string('sumber_dana')->nullable();
+            $table->string('nama_penerima')->nullable();
             $table->text('spesifikasi')->nullable();
             $table->string('koefisien')->nullable();
             $table->decimal('harga_satuan', 20, 2)->nullable();
