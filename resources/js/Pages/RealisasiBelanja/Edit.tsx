@@ -23,6 +23,7 @@ interface TrxBelanjaOption {
     harga_satuan: number;
     total_harga: number;
     kode_akun: string;
+    kode_sub_kegiatan: string;
 }
 
 interface RealisasiBelanjaData {
@@ -75,6 +76,7 @@ export default function Edit({
     const [filteredSubKegiatan, setFilteredSubKegiatan] = useState<
         DropdownOption[]
     >([]);
+    const [filteredAkun, setFilteredAkun] = useState<DropdownOption[]>([]);
     const [filteredTrxBelanja, setFilteredTrxBelanja] = useState<
         TrxBelanjaOption[]
     >([]);
@@ -98,6 +100,35 @@ export default function Edit({
         });
     }, [realisasiBelanja]);
 
+    // Initialize filtered states on component mount
+    useEffect(() => {
+        // Initialize filtered sub kegiatan
+        if (realisasiBelanja.kode_kegiatan) {
+            const filtered = subKegiatan.filter((item) =>
+                item.kode.startsWith(realisasiBelanja.kode_kegiatan),
+            );
+            setFilteredSubKegiatan(filtered);
+        }
+
+        // Initialize filtered akun
+        if (realisasiBelanja.kode_sub_kegiatan) {
+            const trxBelanjaForSubKegiatan = trxBelanja.filter(
+                (item) =>
+                    item.kode_sub_kegiatan ===
+                    realisasiBelanja.kode_sub_kegiatan,
+            );
+            const uniqueAkunCodes = [
+                ...new Set(
+                    trxBelanjaForSubKegiatan.map((item) => item.kode_akun),
+                ),
+            ];
+            const filtered = akun.filter((akunItem) =>
+                uniqueAkunCodes.includes(akunItem.kode),
+            );
+            setFilteredAkun(filtered);
+        }
+    }, [realisasiBelanja, subKegiatan, trxBelanja, akun]);
+
     // Get unique dropdown options from TrxBelanja based on selected akun
     const getUniqueOptions = (field: string) => {
         if (!formData.kode_akun) return [];
@@ -112,18 +143,45 @@ export default function Edit({
         return unique.filter(Boolean);
     };
 
+    // Get kelompok_belanja (paket) options based on selected akun
+    const getKelompokBelanjaOptions = () => {
+        if (!formData.kode_akun) return [];
+        const filtered = trxBelanja.filter(
+            (item) => item.kode_akun === formData.kode_akun,
+        );
+
+        // Remove duplicates with case insensitive comparison
+        const uniqueMap = new Map();
+        filtered.forEach((item) => {
+            const lowerPaket = item.paket.toLowerCase();
+            if (!uniqueMap.has(lowerPaket)) {
+                uniqueMap.set(lowerPaket, item.paket); // Store original case
+            }
+        });
+
+        return Array.from(uniqueMap.values()).filter(Boolean);
+    };
+
     // Get keterangan_belanja options based on selected kelompok_belanja
     const getKeteranganBelanjaOptions = () => {
         if (!formData.kode_akun || !formData.kelompok_belanja) return [];
         const filtered = trxBelanja.filter(
             (item) =>
                 item.kode_akun === formData.kode_akun &&
-                item.paket === formData.kelompok_belanja,
+                item.paket.toLowerCase() ===
+                    formData.kelompok_belanja.toLowerCase(),
         );
-        const unique = [
-            ...new Set(filtered.map((item) => item.keterangan_belanja)),
-        ];
-        return unique.filter(Boolean);
+
+        // Remove duplicates with case insensitive comparison
+        const uniqueMap = new Map();
+        filtered.forEach((item) => {
+            const lowerKeterangan = item.keterangan_belanja.toLowerCase();
+            if (!uniqueMap.has(lowerKeterangan)) {
+                uniqueMap.set(lowerKeterangan, item.keterangan_belanja); // Store original case
+            }
+        });
+
+        return Array.from(uniqueMap.values()).filter(Boolean);
     };
 
     // Get sumber_dana options based on selected keterangan_belanja
@@ -137,8 +195,9 @@ export default function Edit({
         const filtered = trxBelanja.filter(
             (item) =>
                 item.kode_akun === formData.kode_akun &&
-                item.paket === formData.kelompok_belanja &&
-                item.keterangan_belanja === formData.keterangan_belanja,
+                item.paket.toLowerCase() ===
+                    formData.kelompok_belanja.toLowerCase() &&
+                item.keterangan_belanja.toLowerCase() === formData.keterangan_belanja.toLowerCase(),
         );
         const unique = [...new Set(filtered.map((item) => item.sumber_dana))];
         return unique.filter(Boolean);
@@ -156,11 +215,12 @@ export default function Edit({
         const filtered = trxBelanja.filter(
             (item) =>
                 item.kode_akun === formData.kode_akun &&
-                item.paket === formData.kelompok_belanja &&
-                item.keterangan_belanja === formData.keterangan_belanja &&
+                item.paket.toLowerCase() ===
+                    formData.kelompok_belanja.toLowerCase() &&
+                item.keterangan_belanja.toLowerCase() === formData.keterangan_belanja.toLowerCase() &&
                 item.sumber_dana === formData.sumber_dana,
         );
-        
+
         // Remove duplicates with case insensitive comparison
         const uniqueMap = new Map();
         filtered.forEach((item) => {
@@ -169,7 +229,7 @@ export default function Edit({
                 uniqueMap.set(lowerName, item.nama); // Store original case
             }
         });
-        
+
         return Array.from(uniqueMap.values()).filter(Boolean);
     };
 
@@ -186,10 +246,12 @@ export default function Edit({
         const filtered = trxBelanja.filter(
             (item) =>
                 item.kode_akun === formData.kode_akun &&
-                item.paket === formData.kelompok_belanja &&
-                item.keterangan_belanja === formData.keterangan_belanja &&
+                item.paket.toLowerCase() ===
+                    formData.kelompok_belanja.toLowerCase() &&
+                item.keterangan_belanja.toLowerCase() === formData.keterangan_belanja.toLowerCase() &&
                 item.sumber_dana === formData.sumber_dana &&
-                item.nama.toLowerCase() === formData.nama_standar_harga.toLowerCase(),
+                item.nama.toLowerCase() ===
+                    formData.nama_standar_harga.toLowerCase(),
         );
         const unique = [...new Set(filtered.map((item) => item.spesifikasi))];
         return unique.filter(Boolean);
@@ -211,10 +273,12 @@ export default function Edit({
         const selectedTrx = trxBelanja.find(
             (item) =>
                 item.kode_akun === formData.kode_akun &&
-                item.paket === formData.kelompok_belanja &&
-                item.keterangan_belanja === formData.keterangan_belanja &&
+                item.paket.toLowerCase() ===
+                    formData.kelompok_belanja.toLowerCase() &&
+                item.keterangan_belanja.toLowerCase() === formData.keterangan_belanja.toLowerCase() &&
                 item.sumber_dana === formData.sumber_dana &&
-                item.nama.toLowerCase() === formData.nama_standar_harga.toLowerCase() &&
+                item.nama.toLowerCase() ===
+                    formData.nama_standar_harga.toLowerCase() &&
                 item.spesifikasi === selectedSpesifikasi,
         );
 
@@ -246,6 +310,29 @@ export default function Edit({
             setFilteredSubKegiatan([]);
         }
     }, [formData.kode_kegiatan, subKegiatan]);
+
+    // Filter akun based on selected sub kegiatan
+    useEffect(() => {
+        if (formData.kode_sub_kegiatan) {
+            // Get unique akun codes from TrxBelanja for selected sub kegiatan
+            const trxBelanjaForSubKegiatan = trxBelanja.filter(
+                (item) => item.kode_sub_kegiatan === formData.kode_sub_kegiatan,
+            );
+            const uniqueAkunCodes = [
+                ...new Set(
+                    trxBelanjaForSubKegiatan.map((item) => item.kode_akun),
+                ),
+            ];
+
+            // Filter akun dropdown to only show those available in TrxBelanja
+            const filtered = akun.filter((akunItem) =>
+                uniqueAkunCodes.includes(akunItem.kode),
+            );
+            setFilteredAkun(filtered);
+        } else {
+            setFilteredAkun([]);
+        }
+    }, [formData.kode_sub_kegiatan, trxBelanja, akun]);
 
     // Filter trx belanja based on selected akun
     useEffect(() => {
@@ -466,9 +553,10 @@ export default function Edit({
                                     }
                                     className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     required
+                                    disabled={!formData.kode_sub_kegiatan}
                                 >
                                     <option value="">Pilih Akun</option>
-                                    {akun.map((item) => (
+                                    {filteredAkun.map((item) => (
                                         <option
                                             key={item.kode}
                                             value={item.kode}
@@ -503,7 +591,7 @@ export default function Edit({
                                     <option value="">
                                         Pilih Kelompok Belanja
                                     </option>
-                                    {getUniqueOptions('paket').map(
+                                    {getKelompokBelanjaOptions().map(
                                         (paket, index) => (
                                             <option key={index} value={paket}>
                                                 {paket}
