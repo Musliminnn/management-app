@@ -142,7 +142,17 @@ export default function Create({
                 item.keterangan_belanja === formData.keterangan_belanja &&
                 item.sumber_dana === formData.sumber_dana,
         );
-        return filtered; // Return full objects for nama standar harga
+        
+        // Remove duplicates with case insensitive comparison
+        const uniqueMap = new Map();
+        filtered.forEach((item) => {
+            const lowerName = item.nama.toLowerCase();
+            if (!uniqueMap.has(lowerName)) {
+                uniqueMap.set(lowerName, item.nama); // Store original case
+            }
+        });
+        
+        return Array.from(uniqueMap.values()).filter(Boolean);
     };
 
     // Get spesifikasi options based on selected nama_standar_harga
@@ -161,7 +171,7 @@ export default function Create({
                 item.paket === formData.kelompok_belanja &&
                 item.keterangan_belanja === formData.keterangan_belanja &&
                 item.sumber_dana === formData.sumber_dana &&
-                item.nama === formData.nama_standar_harga,
+                item.nama.toLowerCase() === formData.nama_standar_harga.toLowerCase(),
         );
         const unique = [...new Set(filtered.map((item) => item.spesifikasi))];
         return unique.filter(Boolean);
@@ -252,7 +262,7 @@ export default function Create({
                 item.paket === formData.kelompok_belanja &&
                 item.keterangan_belanja === formData.keterangan_belanja &&
                 item.sumber_dana === formData.sumber_dana &&
-                item.nama === formData.nama_standar_harga &&
+                item.nama.toLowerCase() === formData.nama_standar_harga.toLowerCase() &&
                 item.spesifikasi === selectedSpesifikasi,
         );
 
@@ -533,15 +543,13 @@ export default function Create({
                                 <select
                                     value={formData.nama_standar_harga}
                                     onChange={(e) => {
-                                        const selectedTrx =
-                                            getNamaStandarHargaOptions().find(
-                                                (item) =>
-                                                    item.nama ===
-                                                    e.target.value,
-                                            );
-                                        if (selectedTrx) {
-                                            handleTrxBelanjaSelect(selectedTrx);
-                                        }
+                                        setFormData({
+                                            nama_standar_harga: e.target.value,
+                                            spesifikasi: '',
+                                            koefisien: '',
+                                            harga_satuan: 0,
+                                            total_harga: 0,
+                                        });
                                     }}
                                     className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     required
@@ -556,12 +564,9 @@ export default function Create({
                                         Pilih Standar Harga
                                     </option>
                                     {getNamaStandarHargaOptions().map(
-                                        (item) => (
-                                            <option
-                                                key={item.id}
-                                                value={item.nama}
-                                            >
-                                                {item.nama}
+                                        (nama, index) => (
+                                            <option key={index} value={nama}>
+                                                {nama}
                                             </option>
                                         ),
                                     )}
