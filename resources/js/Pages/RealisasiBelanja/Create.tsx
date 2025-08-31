@@ -1,4 +1,6 @@
 import CustomButton from '@/Components/CustomButton';
+import RealisasiDropdown from '@/Components/RealisasiDropdown';
+import SimpleDropdown from '@/Components/SimpleDropdown';
 import { ParentLayout } from '@/Layouts/MainLayout';
 import { useRealisasiBelanjaStore } from '@/stores/realisasiBelanjaStore';
 import { Head, router } from '@inertiajs/react';
@@ -413,230 +415,135 @@ export default function Create({
 
                             {/* Kegiatan */}
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Kegiatan *
-                                </label>
-                                <select
+                                <RealisasiDropdown
+                                    options={kegiatan}
                                     value={formData.kode_kegiatan}
-                                    onChange={(e) => {
+                                    onChange={(value) => {
                                         setFormData({
-                                            kode_kegiatan: e.target.value,
+                                            kode_kegiatan: value,
                                             kode_sub_kegiatan: '', // Reset sub kegiatan
                                         });
                                     }}
-                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    label="Kegiatan"
+                                    placeholder="Pilih Kegiatan"
                                     required
-                                >
-                                    <option value="">Pilih Kegiatan</option>
-                                    {kegiatan.map((item) => (
-                                        <option
-                                            key={item.kode}
-                                            value={item.kode}
-                                        >
-                                            {item.kode} - {item.nama}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.kode_kegiatan && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.kode_kegiatan}
-                                    </p>
-                                )}
+                                    error={errors.kode_kegiatan}
+                                />
                             </div>
 
                             {/* Sub Kegiatan */}
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Sub Kegiatan *
-                                </label>
-                                <select
+                                <RealisasiDropdown
+                                    options={filteredSubKegiatan}
                                     value={formData.kode_sub_kegiatan}
-                                    onChange={(e) =>
+                                    onChange={(value) =>
                                         setFormData({
-                                            kode_sub_kegiatan: e.target.value,
+                                            kode_sub_kegiatan: value,
                                         })
                                     }
-                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    label="Sub Kegiatan"
+                                    placeholder="Pilih Sub Kegiatan"
                                     required
                                     disabled={!formData.kode_kegiatan}
-                                >
-                                    <option value="">Pilih Sub Kegiatan</option>
-                                    {filteredSubKegiatan.map((item) => (
-                                        <option
-                                            key={item.kode}
-                                            value={item.kode}
-                                        >
-                                            {item.kode} - {item.nama}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.kode_sub_kegiatan && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.kode_sub_kegiatan}
-                                    </p>
-                                )}
+                                    error={errors.kode_sub_kegiatan}
+                                />
                             </div>
 
                             {/* Akun */}
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Akun *
-                                </label>
-                                <select
+                                <RealisasiDropdown
+                                    options={filteredAkun}
                                     value={formData.kode_akun}
-                                    onChange={(e) =>
+                                    onChange={(value) =>
                                         setFormData({
-                                            kode_akun: e.target.value,
+                                            kode_akun: value,
                                         })
                                     }
-                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    label="Akun"
+                                    placeholder="Pilih Akun"
                                     required
                                     disabled={!formData.kode_sub_kegiatan}
-                                >
-                                    <option value="">Pilih Akun</option>
-                                    {filteredAkun.map((item) => (
-                                        <option
-                                            key={item.kode}
-                                            value={item.kode}
-                                        >
-                                            {item.kode} - {item.nama}
-                                        </option>
-                                    ))}
-                                </select>
-                                {errors.kode_akun && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.kode_akun}
-                                    </p>
-                                )}
+                                    error={errors.kode_akun}
+                                />
                             </div>
 
                             {/* Kelompok Belanja */}
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Kelompok Belanja *
-                                </label>
-                                <select
+                                <SimpleDropdown
+                                    options={getKelompokBelanjaOptions()}
                                     value={formData.kelompok_belanja}
-                                    onChange={(e) =>
+                                    onChange={(value) =>
                                         setFormData({
-                                            kelompok_belanja: e.target.value,
+                                            kelompok_belanja: value,
                                         })
                                     }
-                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    label="Kelompok Belanja"
+                                    placeholder="Pilih Kelompok Belanja"
                                     required
                                     disabled={!formData.kode_akun}
-                                >
-                                    <option value="">
-                                        Pilih Kelompok Belanja
-                                    </option>
-                                    {getKelompokBelanjaOptions().map(
-                                        (paket, index) => (
-                                            <option key={index} value={paket}>
-                                                {paket}
-                                            </option>
-                                        ),
-                                    )}
-                                </select>
-                                {errors.kelompok_belanja && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.kelompok_belanja}
-                                    </p>
-                                )}
+                                    error={errors.kelompok_belanja}
+                                />
                             </div>
 
                             {/* Keterangan Belanja */}
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Keterangan Belanja *
-                                </label>
-                                <select
+                                <SimpleDropdown
+                                    options={getKeteranganBelanjaOptions()}
                                     value={formData.keterangan_belanja}
-                                    onChange={(e) =>
+                                    onChange={(value) =>
                                         setFormData({
-                                            keterangan_belanja: e.target.value,
+                                            keterangan_belanja: value,
                                         })
                                     }
-                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    label="Keterangan Belanja"
+                                    placeholder="Pilih Keterangan Belanja"
                                     required
                                     disabled={
                                         !formData.kode_akun ||
                                         !formData.kelompok_belanja
                                     }
-                                >
-                                    <option value="">
-                                        Pilih Keterangan Belanja
-                                    </option>
-                                    {getKeteranganBelanjaOptions().map(
-                                        (keterangan, index) => (
-                                            <option
-                                                key={index}
-                                                value={keterangan}
-                                            >
-                                                {keterangan}
-                                            </option>
-                                        ),
-                                    )}
-                                </select>
-                                {errors.keterangan_belanja && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.keterangan_belanja}
-                                    </p>
-                                )}
+                                    error={errors.keterangan_belanja}
+                                />
                             </div>
 
                             {/* Sumber Dana */}
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Sumber Dana *
-                                </label>
-                                <select
+                                <SimpleDropdown
+                                    options={getSumberDanaOptions()}
                                     value={formData.sumber_dana}
-                                    onChange={(e) =>
+                                    onChange={(value) =>
                                         setFormData({
-                                            sumber_dana: e.target.value,
+                                            sumber_dana: value,
                                         })
                                     }
-                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    label="Sumber Dana"
+                                    placeholder="Pilih Sumber Dana"
                                     required
                                     disabled={
                                         !formData.kode_akun ||
                                         !formData.kelompok_belanja ||
                                         !formData.keterangan_belanja
                                     }
-                                >
-                                    <option value="">Pilih Sumber Dana</option>
-                                    {getSumberDanaOptions().map(
-                                        (sumber, index) => (
-                                            <option key={index} value={sumber}>
-                                                {sumber}
-                                            </option>
-                                        ),
-                                    )}
-                                </select>
-                                {errors.sumber_dana && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.sumber_dana}
-                                    </p>
-                                )}
+                                    error={errors.sumber_dana}
+                                />
                             </div>
 
                             {/* Nama Standar Harga */}
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Nama Standar Harga *
-                                </label>
-                                <select
+                                <SimpleDropdown
+                                    options={getNamaStandarHargaOptions()}
                                     value={formData.nama_standar_harga}
-                                    onChange={(e) => {
+                                    onChange={(value) => {
                                         setFormData({
-                                            nama_standar_harga: e.target.value,
+                                            nama_standar_harga: value,
                                             spesifikasi: '',
                                             koefisien: '',
                                             harga_satuan: 0,
                                             total_harga: 0,
                                         });
                                     }}
-                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    label="Nama Standar Harga"
+                                    placeholder="Pilih Standar Harga"
                                     required
                                     disabled={
                                         !formData.kode_akun ||
@@ -644,37 +551,21 @@ export default function Create({
                                         !formData.keterangan_belanja ||
                                         !formData.sumber_dana
                                     }
-                                >
-                                    <option value="">
-                                        Pilih Standar Harga
-                                    </option>
-                                    {getNamaStandarHargaOptions().map(
-                                        (nama, index) => (
-                                            <option key={index} value={nama}>
-                                                {nama}
-                                            </option>
-                                        ),
-                                    )}
-                                </select>
-                                {errors.nama_standar_harga && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.nama_standar_harga}
-                                    </p>
-                                )}
+                                    error={errors.nama_standar_harga}
+                                />
                             </div>
                         </div>
 
                         {/* Spesifikasi */}
                         <div>
-                            <label className="mb-2 block text-sm font-medium text-gray-700">
-                                Spesifikasi *
-                            </label>
-                            <select
+                            <SimpleDropdown
+                                options={getSpesifikasiOptions()}
                                 value={formData.spesifikasi}
-                                onChange={(e) =>
-                                    handleSpesifikasiSelect(e.target.value)
+                                onChange={(value) =>
+                                    handleSpesifikasiSelect(value)
                                 }
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                label="Spesifikasi"
+                                placeholder="Pilih Spesifikasi"
                                 required
                                 disabled={
                                     !formData.kode_akun ||
@@ -683,19 +574,8 @@ export default function Create({
                                     !formData.sumber_dana ||
                                     !formData.nama_standar_harga
                                 }
-                            >
-                                <option value="">Pilih Spesifikasi</option>
-                                {getSpesifikasiOptions().map((spek, index) => (
-                                    <option key={index} value={spek}>
-                                        {spek}
-                                    </option>
-                                ))}
-                            </select>
-                            {errors.spesifikasi && (
-                                <p className="mt-1 text-sm text-red-600">
-                                    {errors.spesifikasi}
-                                </p>
-                            )}
+                                error={errors.spesifikasi}
+                            />
                         </div>
 
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
