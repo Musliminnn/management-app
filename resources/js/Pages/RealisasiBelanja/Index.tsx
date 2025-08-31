@@ -43,22 +43,22 @@ export default function Index({ realisasiBelanja }: Props) {
             <Head title="Input Realisasi Belanja" />
 
             <div className="max-w-full overflow-x-auto p-1">
-                <div className="rounded-lg bg-white shadow-md">
-                    <div className="border-b border-gray-200 p-6">
+                <div className="rounded-lg border border-gray-100 bg-white shadow-md">
+                    <div className="rounded-t-lg bg-gradient-to-r from-main to-main/90 p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h2 className="text-xl font-semibold text-gray-800">
+                                <h2 className="text-xl font-semibold text-white">
                                     Input Realisasi Belanja
                                 </h2>
-                                <p className="mt-1 text-sm text-gray-600">
+                                <p className="mt-1 text-sm text-white/90">
                                     Kelola data realisasi belanja dan laporan
                                     keuangan
                                 </p>
                             </div>
                             <Link href="/realisasi-belanja/create">
                                 <CustomButton
-                                    variant="primary"
-                                    className="flex items-center gap-2 px-4 py-2"
+                                    variant="secondary"
+                                    className="flex items-center gap-2 border-white/30 bg-white/10 px-4 py-2 text-white transition-all duration-200 hover:bg-white/20"
                                 >
                                     <svg
                                         className="h-4 w-4"
@@ -81,33 +81,33 @@ export default function Index({ realisasiBelanja }: Props) {
 
                     <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gray-50">
+                            <thead className="bg-main/5">
                                 <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-main">
                                         No
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-main">
                                         Tanggal
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-main">
                                         Kegiatan
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-main">
                                         Sub Kegiatan
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-main">
                                         Akun
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-main">
                                         Realisasi
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-main">
                                         Tujuan Pembayaran
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-main">
                                         Input Oleh
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-main">
                                         Aksi
                                     </th>
                                 </tr>
@@ -210,18 +210,18 @@ export default function Index({ realisasiBelanja }: Props) {
                                                 <div className="flex space-x-2">
                                                     <Link
                                                         href={`/realisasi-belanja/${item.id}`}
-                                                        className="text-blue-600 hover:text-blue-800"
+                                                        className="font-medium text-main transition-colors duration-200 hover:text-main/80"
                                                     >
                                                         Detail
                                                     </Link>
                                                     <Link
                                                         href={`/realisasi-belanja/${item.id}/edit`}
-                                                        className="text-yellow-600 hover:text-yellow-800"
+                                                        className="font-medium text-yellow-600 transition-colors duration-200 hover:text-yellow-800"
                                                     >
                                                         Edit
                                                     </Link>
                                                     <button
-                                                        className="text-red-600 hover:text-red-800"
+                                                        className="font-medium text-red-600 transition-colors duration-200 hover:text-red-800"
                                                         onClick={() => {
                                                             if (
                                                                 confirm(
@@ -245,7 +245,7 @@ export default function Index({ realisasiBelanja }: Props) {
 
                     {/* Pagination */}
                     {realisasiBelanja.last_page > 1 && (
-                        <div className="border-t border-gray-200 bg-gray-50 px-6 py-3">
+                        <div className="rounded-b-lg border-t border-gray-200 bg-main/5 px-6 py-3">
                             <div className="flex items-center justify-between">
                                 <div className="text-sm text-gray-700">
                                     Menampilkan{' '}
@@ -268,12 +268,12 @@ export default function Index({ realisasiBelanja }: Props) {
                                         <Link
                                             key={page}
                                             href={`/realisasi-belanja?page=${page}`}
-                                            className={`rounded px-3 py-1 text-sm ${
+                                            className={`rounded px-3 py-1 text-sm font-medium transition-all duration-200 ${
                                                 page ===
                                                 realisasiBelanja.current_page
-                                                    ? 'bg-blue-600 text-white'
-                                                    : 'bg-white text-gray-700 hover:bg-gray-100'
-                                            } border`}
+                                                    ? 'bg-main text-white shadow-sm'
+                                                    : 'border border-gray-200 bg-white text-gray-700 hover:bg-main/10 hover:text-main'
+                                            }`}
                                         >
                                             {page}
                                         </Link>

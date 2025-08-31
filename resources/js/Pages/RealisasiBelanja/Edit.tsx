@@ -1,4 +1,5 @@
 import CustomButton from '@/Components/CustomButton';
+import CustomDayPicker from '@/Components/CustomDayPicker';
 import RealisasiDropdown from '@/Components/RealisasiDropdown';
 import SimpleDropdown from '@/Components/SimpleDropdown';
 import { ParentLayout } from '@/Layouts/MainLayout';
@@ -461,12 +462,12 @@ export default function Edit({
             <Head title={`Edit Realisasi Belanja - ${realisasiBelanja.id}`} />
 
             <div className="mx-auto max-w-4xl p-6">
-                <div className="rounded-lg bg-white shadow-md">
-                    <div className="border-b border-gray-200 p-6">
-                        <h2 className="text-xl font-semibold text-gray-800">
+                <div className="rounded-lg border border-gray-100 bg-white shadow-md">
+                    <div className="rounded-t-lg bg-gradient-to-r from-main to-main/90 p-6">
+                        <h2 className="text-xl font-semibold text-white">
                             Edit Realisasi Belanja
                         </h2>
-                        <p className="mt-1 text-sm text-gray-600">
+                        <p className="mt-1 text-sm text-white/90">
                             Update data realisasi belanja ID:{' '}
                             {realisasiBelanja.id}
                         </p>
@@ -474,7 +475,18 @@ export default function Edit({
 
                     <form onSubmit={handleSubmit} className="space-y-6 p-6">
                         {errors.form && (
-                            <div className="rounded border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+                            <div className="flex items-center rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+                                <svg
+                                    className="mr-2 h-5 w-5 flex-shrink-0"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path
+                                        fillRule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                        clipRule="evenodd"
+                                    />
+                                </svg>
                                 {errors.form}
                             </div>
                         )}
@@ -482,23 +494,20 @@ export default function Edit({
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             {/* Tanggal */}
                             <div>
-                                <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Tanggal *
-                                </label>
-                                <input
-                                    type="date"
+                                <CustomDayPicker
                                     value={formData.tanggal}
-                                    onChange={(e) =>
-                                        setFormData({ tanggal: e.target.value })
+                                    onChange={(date: string) =>
+                                        setFormData({ tanggal: date })
                                     }
-                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    baseDate={
+                                        formData.tanggal ||
+                                        new Date().toISOString().split('T')[0]
+                                    } // Periode dari data yang ada atau hari ini
+                                    label="Tanggal"
+                                    placeholder="Pilih tanggal realisasi"
                                     required
+                                    error={errors.tanggal}
                                 />
-                                {errors.tanggal && (
-                                    <p className="mt-1 text-sm text-red-600">
-                                        {errors.tanggal}
-                                    </p>
-                                )}
                             </div>
 
                             {/* Kegiatan */}
@@ -739,11 +748,23 @@ export default function Edit({
                                             parseFloat(e.target.value) || 0,
                                     })
                                 }
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out hover:border-main focus:border-main focus:outline-none focus:ring-2 focus:ring-main"
+                                placeholder="Masukkan nilai realisasi..."
                                 required
                             />
                             {errors.realisasi && (
-                                <p className="mt-1 text-sm text-red-600">
+                                <p className="mt-1 flex items-center text-sm text-red-600">
+                                    <svg
+                                        className="mr-1 h-4 w-4 flex-shrink-0"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fillRule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                            clipRule="evenodd"
+                                        />
+                                    </svg>
                                     {errors.realisasi}
                                 </p>
                             )}
@@ -762,18 +783,30 @@ export default function Edit({
                                     })
                                 }
                                 rows={3}
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="resize-vertical w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out hover:border-main/50 focus:border-main focus:outline-none focus:ring-2 focus:ring-main/20"
+                                placeholder="Masukkan tujuan pembayaran..."
                                 required
                             />
                             {errors.tujuan_pembayaran && (
-                                <p className="mt-1 text-sm text-red-600">
+                                <p className="mt-1 flex items-center text-sm text-red-600">
+                                    <svg
+                                        className="mr-1 h-4 w-4 flex-shrink-0"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fillRule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                            clipRule="evenodd"
+                                        />
+                                    </svg>
                                     {errors.tujuan_pembayaran}
                                 </p>
                             )}
                         </div>
 
                         {/* Actions */}
-                        <div className="flex justify-end space-x-3 border-t border-gray-200 pt-6">
+                        <div className="mt-8 flex justify-end space-x-3 border-t border-gray-200 pt-6">
                             <CustomButton
                                 type="button"
                                 variant="outlined"
@@ -781,6 +814,7 @@ export default function Edit({
                                     router.visit('/realisasi-belanja')
                                 }
                                 disabled={isSubmitting}
+                                className="px-6 py-2.5"
                             >
                                 Batal
                             </CustomButton>
@@ -788,8 +822,34 @@ export default function Edit({
                                 type="submit"
                                 variant="primary"
                                 disabled={isSubmitting || !isFormValid()}
+                                className="min-w-[120px] px-6 py-2.5"
                             >
-                                {isSubmitting ? 'Menyimpan...' : 'Update'}
+                                {isSubmitting ? (
+                                    <div className="flex items-center">
+                                        <svg
+                                            className="-ml-1 mr-2 h-4 w-4 animate-spin text-white"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <circle
+                                                className="opacity-25"
+                                                cx="12"
+                                                cy="12"
+                                                r="10"
+                                                stroke="currentColor"
+                                                strokeWidth="4"
+                                            />
+                                            <path
+                                                className="opacity-75"
+                                                fill="currentColor"
+                                                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                            />
+                                        </svg>
+                                        Menyimpan...
+                                    </div>
+                                ) : (
+                                    'Update'
+                                )}
                             </CustomButton>
                         </div>
                     </form>

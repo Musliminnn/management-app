@@ -39,14 +39,14 @@ export default function Show({ realisasiBelanja }: Props) {
             <Head title={`Detail Realisasi Belanja - ${realisasiBelanja.id}`} />
 
             <div className="mx-auto max-w-4xl p-6">
-                <div className="rounded-lg bg-white shadow-md">
-                    <div className="border-b border-gray-200 p-6">
+                <div className="rounded-lg border border-gray-100 bg-white shadow-md">
+                    <div className="rounded-t-lg bg-gradient-to-r from-main to-main/90 p-6">
                         <div className="flex items-center justify-between">
                             <div>
-                                <h2 className="text-xl font-semibold text-gray-800">
+                                <h2 className="text-xl font-semibold text-white">
                                     Detail Realisasi Belanja
                                 </h2>
-                                <p className="mt-1 text-sm text-gray-600">
+                                <p className="mt-1 text-sm text-white/90">
                                     ID: {realisasiBelanja.id} | Tanggal:{' '}
                                     {new Date(
                                         realisasiBelanja.tanggal,
@@ -56,13 +56,13 @@ export default function Show({ realisasiBelanja }: Props) {
                             <div className="flex space-x-2">
                                 <Link
                                     href={`/realisasi-belanja/${realisasiBelanja.id}/edit`}
-                                    className="rounded-md bg-yellow-600 px-4 py-2 text-white transition duration-150 hover:bg-yellow-700"
+                                    className="rounded-lg border border-white/30 bg-white/10 px-4 py-2 font-medium text-white transition-all duration-200 hover:bg-white/20"
                                 >
                                     Edit
                                 </Link>
                                 <Link
                                     href="/realisasi-belanja"
-                                    className="rounded-md bg-gray-600 px-4 py-2 text-white transition duration-150 hover:bg-gray-700"
+                                    className="rounded-lg border border-white/40 bg-white/20 px-4 py-2 font-medium text-white transition-all duration-200 hover:bg-white/30"
                                 >
                                     Kembali
                                 </Link>
@@ -74,7 +74,7 @@ export default function Show({ realisasiBelanja }: Props) {
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                             {/* Informasi Kegiatan */}
                             <div className="space-y-4">
-                                <h3 className="border-b pb-2 text-lg font-medium text-gray-900">
+                                <h3 className="border-b border-main/20 pb-2 text-lg font-medium text-main">
                                     Informasi Kegiatan
                                 </h3>
 
@@ -114,8 +114,8 @@ export default function Show({ realisasiBelanja }: Props) {
 
                             {/* Informasi Belanja */}
                             <div className="space-y-4">
-                                <h3 className="border-b pb-2 text-lg font-medium text-gray-900">
-                                    Informasi Belanja
+                                <h3 className="border-b border-main/20 pb-2 text-lg font-medium text-main">
+                                    Detail Belanja
                                 </h3>
 
                                 <div>
@@ -149,8 +149,8 @@ export default function Show({ realisasiBelanja }: Props) {
 
                         {/* Informasi Standar Harga */}
                         <div className="mt-8">
-                            <h3 className="mb-4 border-b pb-2 text-lg font-medium text-gray-900">
-                                Informasi Standar Harga
+                            <h3 className="mb-4 border-b border-main/20 pb-2 text-lg font-medium text-main">
+                                Standar Harga & Spesifikasi
                             </h3>
 
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -176,8 +176,8 @@ export default function Show({ realisasiBelanja }: Props) {
 
                         {/* Perhitungan */}
                         <div className="mt-8">
-                            <h3 className="mb-4 border-b pb-2 text-lg font-medium text-gray-900">
-                                Perhitungan & Realisasi
+                            <h3 className="mb-4 border-b border-main/20 pb-2 text-lg font-medium text-main">
+                                Perhitungan Harga
                             </h3>
 
                             <div className="grid grid-cols-1 gap-6 md:grid-cols-4">
@@ -254,10 +254,10 @@ export default function Show({ realisasiBelanja }: Props) {
 
                         {/* Tujuan Pembayaran */}
                         <div className="mt-8">
-                            <h3 className="mb-4 border-b pb-2 text-lg font-medium text-gray-900">
+                            <h3 className="mb-4 border-b border-main/20 pb-2 text-lg font-medium text-main">
                                 Tujuan Pembayaran
                             </h3>
-                            <p className="whitespace-pre-wrap rounded-md bg-gray-50 p-4 text-sm text-gray-900">
+                            <p className="whitespace-pre-wrap rounded-lg border border-main/10 bg-main/5 p-4 text-sm text-gray-900">
                                 {realisasiBelanja.tujuan_pembayaran}
                             </p>
                         </div>
