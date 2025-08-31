@@ -15,6 +15,9 @@ interface DropdownOption {
 interface TrxBelanjaOption {
     id: number;
     nama: string;
+    paket: string;
+    keterangan_belanja: string;
+    sumber_dana: string;
     spesifikasi: string;
     koefisien: number;
     harga_satuan: number;
@@ -77,21 +80,65 @@ export default function Create({
         }
     }, [formData.kode_akun, trxBelanja]);
 
-    // Auto-fill data from selected akun
+    // Get unique dropdown options from TrxBelanja based on selected akun
+    const getUniqueOptions = (field: string) => {
+        if (!formData.kode_akun) return [];
+        const filtered = trxBelanja.filter(
+            (item) => item.kode_akun === formData.kode_akun,
+        );
+        const unique = [
+            ...new Set(
+                filtered.map((item) => item[field as keyof TrxBelanjaOption]),
+            ),
+        ];
+        return unique.filter(Boolean);
+    };
+
+    // Get keterangan_belanja options based on selected kelompok_belanja
+    const getKeteranganBelanjaOptions = () => {
+        if (!formData.kode_akun || !formData.kelompok_belanja) return [];
+        const filtered = trxBelanja.filter(
+            (item) =>
+                item.kode_akun === formData.kode_akun &&
+                item.paket === formData.kelompok_belanja,
+        );
+        const unique = [
+            ...new Set(filtered.map((item) => item.keterangan_belanja)),
+        ];
+        return unique.filter(Boolean);
+    };
+
+    // Get sumber_dana options based on selected keterangan_belanja
+    const getSumberDanaOptions = () => {
+        if (
+            !formData.kode_akun ||
+            !formData.kelompok_belanja ||
+            !formData.keterangan_belanja
+        )
+            return [];
+        const filtered = trxBelanja.filter(
+            (item) =>
+                item.kode_akun === formData.kode_akun &&
+                item.paket === formData.kelompok_belanja &&
+                item.keterangan_belanja === formData.keterangan_belanja,
+        );
+        const unique = [...new Set(filtered.map((item) => item.sumber_dana))];
+        return unique.filter(Boolean);
+    };
+
+    // Clear keterangan_belanja when kelompok_belanja changes
     useEffect(() => {
-        if (formData.kode_akun) {
-            const selectedAkun = akun.find(
-                (item) => item.kode === formData.kode_akun,
-            );
-            if (selectedAkun) {
-                setFormData({
-                    kelompok_belanja: selectedAkun.kelompok_belanja || '',
-                    keterangan_belanja: selectedAkun.keterangan_belanja || '',
-                    sumber_dana: selectedAkun.sumber_dana || '',
-                });
-            }
+        if (formData.kelompok_belanja) {
+            setFormData({ keterangan_belanja: '' });
         }
-    }, [formData.kode_akun, akun]);
+    }, [formData.kelompok_belanja]);
+
+    // Clear sumber_dana when keterangan_belanja changes
+    useEffect(() => {
+        if (formData.keterangan_belanja) {
+            setFormData({ sumber_dana: '' });
+        }
+    }, [formData.keterangan_belanja]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -278,8 +325,7 @@ export default function Create({
                                 <label className="mb-2 block text-sm font-medium text-gray-700">
                                     Kelompok Belanja *
                                 </label>
-                                <input
-                                    type="text"
+                                <select
                                     value={formData.kelompok_belanja}
                                     onChange={(e) =>
                                         setFormData({
@@ -288,7 +334,19 @@ export default function Create({
                                     }
                                     className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     required
-                                />
+                                    disabled={!formData.kode_akun}
+                                >
+                                    <option value="">
+                                        Pilih Kelompok Belanja
+                                    </option>
+                                    {getUniqueOptions('paket').map(
+                                        (paket, index) => (
+                                            <option key={index} value={paket}>
+                                                {paket}
+                                            </option>
+                                        ),
+                                    )}
+                                </select>
                                 {errors.kelompok_belanja && (
                                     <p className="mt-1 text-sm text-red-600">
                                         {errors.kelompok_belanja}
@@ -301,8 +359,7 @@ export default function Create({
                                 <label className="mb-2 block text-sm font-medium text-gray-700">
                                     Keterangan Belanja *
                                 </label>
-                                <input
-                                    type="text"
+                                <select
                                     value={formData.keterangan_belanja}
                                     onChange={(e) =>
                                         setFormData({
@@ -311,7 +368,25 @@ export default function Create({
                                     }
                                     className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     required
-                                />
+                                    disabled={
+                                        !formData.kode_akun ||
+                                        !formData.kelompok_belanja
+                                    }
+                                >
+                                    <option value="">
+                                        Pilih Keterangan Belanja
+                                    </option>
+                                    {getKeteranganBelanjaOptions().map(
+                                        (keterangan, index) => (
+                                            <option
+                                                key={index}
+                                                value={keterangan}
+                                            >
+                                                {keterangan}
+                                            </option>
+                                        ),
+                                    )}
+                                </select>
                                 {errors.keterangan_belanja && (
                                     <p className="mt-1 text-sm text-red-600">
                                         {errors.keterangan_belanja}
@@ -324,8 +399,7 @@ export default function Create({
                                 <label className="mb-2 block text-sm font-medium text-gray-700">
                                     Sumber Dana *
                                 </label>
-                                <input
-                                    type="text"
+                                <select
                                     value={formData.sumber_dana}
                                     onChange={(e) =>
                                         setFormData({
@@ -334,7 +408,21 @@ export default function Create({
                                     }
                                     className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     required
-                                />
+                                    disabled={
+                                        !formData.kode_akun ||
+                                        !formData.kelompok_belanja ||
+                                        !formData.keterangan_belanja
+                                    }
+                                >
+                                    <option value="">Pilih Sumber Dana</option>
+                                    {getSumberDanaOptions().map(
+                                        (sumber, index) => (
+                                            <option key={index} value={sumber}>
+                                                {sumber}
+                                            </option>
+                                        ),
+                                    )}
+                                </select>
                                 {errors.sumber_dana && (
                                     <p className="mt-1 text-sm text-red-600">
                                         {errors.sumber_dana}
@@ -386,15 +474,24 @@ export default function Create({
                             <label className="mb-2 block text-sm font-medium text-gray-700">
                                 Spesifikasi *
                             </label>
-                            <textarea
+                            <select
                                 value={formData.spesifikasi}
                                 onChange={(e) =>
                                     setFormData({ spesifikasi: e.target.value })
                                 }
-                                rows={3}
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 required
-                            />
+                                disabled={!formData.kode_akun}
+                            >
+                                <option value="">Pilih Spesifikasi</option>
+                                {getUniqueOptions('spesifikasi').map(
+                                    (spek, index) => (
+                                        <option key={index} value={spek}>
+                                            {spek}
+                                        </option>
+                                    ),
+                                )}
+                            </select>
                             {errors.spesifikasi && (
                                 <p className="mt-1 text-sm text-red-600">
                                     {errors.spesifikasi}

@@ -47,9 +47,13 @@ interface DropdownOptions {
     trxBelanja: Array<{
         id: number;
         nama: string;
+        paket: string;
+        keterangan_belanja: string;
+        sumber_dana: string;
         spesifikasi: string;
         koefisien: number;
         harga_satuan: number;
+        kode_akun: string;
     }>;
 }
 
