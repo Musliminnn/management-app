@@ -135,7 +135,7 @@ export default function CustomDropdownWithSearch({
                     } ${error ? 'border-red-300 focus:ring-red-500' : ''} `}
                 >
                     <span
-                        className={`block truncate ${!selectedLabel ? 'text-gray-500' : ''}`}
+                        className={`block truncate ${value && !disabled ? 'pr-16' : 'pr-8'} ${!selectedLabel ? 'text-gray-500' : ''}`}
                     >
                         {selectedLabel || placeholder}
                     </span>
@@ -194,8 +194,10 @@ export default function CustomDropdownWithSearch({
                                         onClick={() =>
                                             handleSelect(option.value)
                                         }
-                                        title={option.description || option.label}
-                                        className={`w-full px-3 py-2 text-left text-sm hover:bg-main/10 focus:bg-main/10 focus:outline-none transition-colors ${value === option.value ? 'bg-main/20 font-medium text-main' : 'text-gray-900'} `}
+                                        title={
+                                            option.description || option.label
+                                        }
+                                        className={`w-full px-3 py-2 text-left text-sm transition-colors hover:bg-main/10 focus:bg-main/10 focus:outline-none ${value === option.value ? 'bg-main/20 font-medium text-main' : 'text-gray-900'} `}
                                     >
                                         <div className="truncate">
                                             {option.label}
