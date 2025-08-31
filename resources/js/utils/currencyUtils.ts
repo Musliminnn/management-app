@@ -64,16 +64,24 @@ export const handleCurrencyInputChange = (
 /**
  * Calculate maximum koefisien from DPA string
  * Extracts numbers from string like "100 Orang x 2 Paket" and multiplies them
+ * For decimal numbers like "17.4099528663817", returns the integer part (17)
  */
 export const calculateMaxKoefisien = (koefisienDPA: string): number => {
     if (!koefisienDPA) return 0;
     
-    // Extract numbers from string
-    const numbers = koefisienDPA.match(/\d+/g);
+    // First check if it's a single decimal number
+    const singleNumber = parseFloat(koefisienDPA.trim());
+    if (!isNaN(singleNumber) && koefisienDPA.trim().match(/^\d+(\.\d+)?$/)) {
+        // If it's a single decimal number, return the integer part
+        return Math.floor(singleNumber);
+    }
+    
+    // Extract numbers from string like "100 Orang x 2 Paket"
+    const numbers = koefisienDPA.match(/\d+(\.\d+)?/g);
     if (!numbers || numbers.length === 0) return 0;
     
-    // Multiply all numbers found
-    return numbers.reduce((acc, num) => acc * parseInt(num), 1);
+    // Multiply all numbers found (convert to integers for multiplication)
+    return numbers.reduce((acc, num) => acc * Math.floor(parseFloat(num)), 1);
 };
 
 /**
