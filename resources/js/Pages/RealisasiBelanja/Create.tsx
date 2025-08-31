@@ -147,7 +147,7 @@ export default function Create({
                 item.paket.toLowerCase() ===
                     formData.kelompok_belanja.toLowerCase(),
         );
-        
+
         // Remove duplicates with case insensitive comparison
         const uniqueMap = new Map();
         filtered.forEach((item) => {
@@ -156,7 +156,7 @@ export default function Create({
                 uniqueMap.set(lowerKeterangan, item.keterangan_belanja); // Store original case
             }
         });
-        
+
         return Array.from(uniqueMap.values()).filter(Boolean);
     };
 
@@ -173,10 +173,20 @@ export default function Create({
                 item.kode_akun === formData.kode_akun &&
                 item.paket.toLowerCase() ===
                     formData.kelompok_belanja.toLowerCase() &&
-                item.keterangan_belanja.toLowerCase() === formData.keterangan_belanja.toLowerCase(),
+                item.keterangan_belanja.toLowerCase() ===
+                    formData.keterangan_belanja.toLowerCase(),
         );
-        const unique = [...new Set(filtered.map((item) => item.sumber_dana))];
-        return unique.filter(Boolean);
+
+        // Remove duplicates with case insensitive comparison
+        const uniqueMap = new Map();
+        filtered.forEach((item) => {
+            const lowerSumberDana = item.sumber_dana.toLowerCase();
+            if (!uniqueMap.has(lowerSumberDana)) {
+                uniqueMap.set(lowerSumberDana, item.sumber_dana); // Store original case
+            }
+        });
+
+        return Array.from(uniqueMap.values()).filter(Boolean);
     };
 
     // Get nama_standar_harga options based on selected sumber_dana
@@ -193,8 +203,10 @@ export default function Create({
                 item.kode_akun === formData.kode_akun &&
                 item.paket.toLowerCase() ===
                     formData.kelompok_belanja.toLowerCase() &&
-                item.keterangan_belanja.toLowerCase() === formData.keterangan_belanja.toLowerCase() &&
-                item.sumber_dana === formData.sumber_dana,
+                item.keterangan_belanja.toLowerCase() ===
+                    formData.keterangan_belanja.toLowerCase() &&
+                item.sumber_dana.toLowerCase() ===
+                    formData.sumber_dana.toLowerCase(),
         );
 
         // Remove duplicates with case insensitive comparison
@@ -224,13 +236,24 @@ export default function Create({
                 item.kode_akun === formData.kode_akun &&
                 item.paket.toLowerCase() ===
                     formData.kelompok_belanja.toLowerCase() &&
-                item.keterangan_belanja.toLowerCase() === formData.keterangan_belanja.toLowerCase() &&
-                item.sumber_dana === formData.sumber_dana &&
+                item.keterangan_belanja.toLowerCase() ===
+                    formData.keterangan_belanja.toLowerCase() &&
+                item.sumber_dana.toLowerCase() ===
+                    formData.sumber_dana.toLowerCase() &&
                 item.nama.toLowerCase() ===
                     formData.nama_standar_harga.toLowerCase(),
         );
-        const unique = [...new Set(filtered.map((item) => item.spesifikasi))];
-        return unique.filter(Boolean);
+
+        // Remove duplicates with case insensitive comparison
+        const uniqueMap = new Map();
+        filtered.forEach((item) => {
+            const lowerSpesifikasi = item.spesifikasi.toLowerCase();
+            if (!uniqueMap.has(lowerSpesifikasi)) {
+                uniqueMap.set(lowerSpesifikasi, item.spesifikasi); // Store original case
+            }
+        });
+
+        return Array.from(uniqueMap.values()).filter(Boolean);
     };
 
     // Clear kode_akun when kode_sub_kegiatan changes
@@ -334,11 +357,14 @@ export default function Create({
                 item.kode_akun === formData.kode_akun &&
                 item.paket.toLowerCase() ===
                     formData.kelompok_belanja.toLowerCase() &&
-                item.keterangan_belanja.toLowerCase() === formData.keterangan_belanja.toLowerCase() &&
-                item.sumber_dana === formData.sumber_dana &&
+                item.keterangan_belanja.toLowerCase() ===
+                    formData.keterangan_belanja.toLowerCase() &&
+                item.sumber_dana.toLowerCase() ===
+                    formData.sumber_dana.toLowerCase() &&
                 item.nama.toLowerCase() ===
                     formData.nama_standar_harga.toLowerCase() &&
-                item.spesifikasi === selectedSpesifikasi,
+                item.spesifikasi.toLowerCase() ===
+                    selectedSpesifikasi.toLowerCase(),
         );
 
         if (selectedTrx) {
