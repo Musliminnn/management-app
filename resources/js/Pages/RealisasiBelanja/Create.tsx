@@ -4,6 +4,11 @@ import RealisasiDropdown from '@/Components/RealisasiDropdown';
 import SimpleDropdown from '@/Components/SimpleDropdown';
 import { ParentLayout } from '@/Layouts/MainLayout';
 import { useRealisasiBelanjaStore } from '@/stores/realisasiBelanjaStore';
+import {
+    formatCurrency,
+    formatCurrencyNumber,
+    handleCurrencyInputChange,
+} from '@/utils/currencyUtils';
 import { Head, router } from '@inertiajs/react';
 import React, { useEffect, useState } from 'react';
 
@@ -62,10 +67,38 @@ export default function Create({
         TrxBelanjaOption[]
     >([]);
 
+    // State for currency input display
+    const [hargaSatuanDisplay, setHargaSatuanDisplay] = useState<string>('');
+
+    // State for DPA values (readonly, from TrxBelanja)
+    const [dpaValues, setDpaValues] = useState({
+        koefisien: '',
+        harga_satuan: 0,
+        total_harga: 0,
+    });
+
+    // Auto-calculate realisasi when koefisien_realisasi or harga_satuan_realisasi changes
+    useEffect(() => {
+        const realisasi =
+            formData.koefisien_realisasi * formData.harga_satuan_realisasi;
+        setFormData({ realisasi });
+    }, [formData.koefisien_realisasi, formData.harga_satuan_realisasi]);
+
     // Reset form to initial empty state when component mounts
     useEffect(() => {
         resetForm();
     }, []); // Empty dependency array means this runs only once on mount
+
+    // Update harga satuan display when form data changes
+    useEffect(() => {
+        if (formData.harga_satuan_realisasi > 0) {
+            setHargaSatuanDisplay(
+                formatCurrencyNumber(formData.harga_satuan_realisasi),
+            );
+        } else {
+            setHargaSatuanDisplay('');
+        }
+    }, [formData.harga_satuan_realisasi]);
 
     // Filter sub kegiatan based on selected kegiatan
     useEffect(() => {
@@ -261,6 +294,11 @@ export default function Create({
                 sumber_dana: '',
                 nama_standar_harga: '',
                 spesifikasi: '',
+                koefisien_realisasi: 0,
+                harga_satuan_realisasi: 0,
+                realisasi: 0,
+            });
+            setDpaValues({
                 koefisien: '',
                 harga_satuan: 0,
                 total_harga: 0,
@@ -308,7 +346,14 @@ export default function Create({
         clearErrors();
 
         try {
-            router.post('/realisasi-belanja', formData as any, {
+            // Prepare data for submission - use realisasi values for koefisien and harga_satuan
+            const submitData = {
+                ...formData,
+                koefisien: formData.koefisien_realisasi, // Save realisasi value as koefisien
+                harga_satuan: formData.harga_satuan_realisasi, // Save realisasi value as harga_satuan
+            };
+
+            router.post('/realisasi-belanja', submitData as any, {
                 onSuccess: () => {
                     router.visit('/realisasi-belanja');
                 },
@@ -325,11 +370,16 @@ export default function Create({
         }
     };
 
-    // Handle spesifikasi selection to auto-fill koefisien, harga_satuan, total_harga
+    // Handle spesifikasi selection to auto-fill DPA values (koefisien, harga_satuan, total_harga)
     const handleSpesifikasiSelect = (selectedSpesifikasi: string) => {
         if (!selectedSpesifikasi) {
             setFormData({
                 spesifikasi: '',
+                koefisien_realisasi: 0,
+                harga_satuan_realisasi: 0,
+                realisasi: 0,
+            });
+            setDpaValues({
                 koefisien: '',
                 harga_satuan: 0,
                 total_harga: 0,
@@ -356,6 +406,11 @@ export default function Create({
         if (selectedTrx) {
             setFormData({
                 spesifikasi: selectedTrx.spesifikasi,
+                koefisien_realisasi: 0,
+                harga_satuan_realisasi: 0,
+                realisasi: 0,
+            });
+            setDpaValues({
                 koefisien: selectedTrx.koefisien,
                 harga_satuan: selectedTrx.harga_satuan,
                 total_harga: selectedTrx.total_harga,
@@ -363,6 +418,11 @@ export default function Create({
         } else {
             setFormData({
                 spesifikasi: selectedSpesifikasi,
+                koefisien_realisasi: 0,
+                harga_satuan_realisasi: 0,
+                realisasi: 0,
+            });
+            setDpaValues({
                 koefisien: '',
                 harga_satuan: 0,
                 total_harga: 0,
@@ -545,6 +605,11 @@ export default function Create({
                                         setFormData({
                                             nama_standar_harga: value,
                                             spesifikasi: '',
+                                            koefisien_realisasi: 0,
+                                            harga_satuan_realisasi: 0,
+                                            realisasi: 0,
+                                        });
+                                        setDpaValues({
                                             koefisien: '',
                                             harga_satuan: 0,
                                             total_harga: 0,
@@ -587,16 +652,71 @@ export default function Create({
                         </div>
 
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                            {/* Koefisien */}
+                            {/* Koefisien DPA (readonly) */}
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-gray-700">
+                                    Koefisien (DPA)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={dpaValues.koefisien}
+                                    readOnly
+                                    className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 focus:border-main focus:outline-none focus:ring-2 focus:ring-main/20"
+                                />
+                            </div>
+
+                            {/* Harga Satuan DPA (readonly) */}
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-gray-700">
+                                    Harga Satuan (DPA)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formatCurrency(
+                                        dpaValues.harga_satuan,
+                                    )}
+                                    readOnly
+                                    className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 focus:border-main focus:outline-none focus:ring-2 focus:ring-main/20"
+                                />
+                            </div>
+
+                            {/* Total Harga DPA (readonly) */}
+                            <div>
+                                <label className="mb-2 block text-sm font-medium text-gray-700">
+                                    Pagu Anggaran
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formatCurrency(
+                                        dpaValues.total_harga,
+                                    )}
+                                    readOnly
+                                    className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 focus:border-main focus:outline-none focus:ring-2 focus:ring-main/20"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                            {/* Koefisien Realisasi */}
                             <div>
                                 <label className="mb-2 block text-sm font-medium text-gray-700">
                                     Koefisien *
                                 </label>
                                 <input
-                                    type="text"
-                                    value={formData.koefisien}
-                                    readOnly
-                                    className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 focus:border-main focus:outline-none focus:ring-2 focus:ring-main/20"
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    value={formData.koefisien_realisasi || ''}
+                                    onChange={(e) => {
+                                        const value =
+                                            parseFloat(e.target.value) || 0;
+                                        setFormData({
+                                            koefisien_realisasi: value,
+                                        });
+                                    }}
+                                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out hover:border-main focus:border-main focus:outline-none focus:ring-2 focus:ring-main"
+                                    placeholder="Masukkan koefisien..."
+                                    required
                                 />
                                 {errors.koefisien && (
                                     <p className="mt-1 flex items-center text-sm text-red-600">
@@ -616,19 +736,29 @@ export default function Create({
                                 )}
                             </div>
 
-                            {/* Harga Satuan */}
+                            {/* Harga Satuan Realisasi */}
                             <div>
                                 <label className="mb-2 block text-sm font-medium text-gray-700">
                                     Harga Satuan *
                                 </label>
                                 <input
                                     type="text"
-                                    value={new Intl.NumberFormat('id-ID', {
-                                        style: 'currency',
-                                        currency: 'IDR',
-                                    }).format(formData.harga_satuan)}
-                                    readOnly
-                                    className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 focus:border-main focus:outline-none focus:ring-2 focus:ring-main/20"
+                                    value={hargaSatuanDisplay}
+                                    onChange={(e) => {
+                                        const formatted =
+                                            handleCurrencyInputChange(
+                                                e.target.value,
+                                                (amount) =>
+                                                    setFormData({
+                                                        harga_satuan_realisasi:
+                                                            amount,
+                                                    }),
+                                            );
+                                        setHargaSatuanDisplay(formatted);
+                                    }}
+                                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out hover:border-main focus:border-main focus:outline-none focus:ring-2 focus:ring-main"
+                                    placeholder="Masukkan harga satuan..."
+                                    required
                                 />
                                 {errors.harga_satuan && (
                                     <p className="mt-1 flex items-center text-sm text-red-600">
@@ -648,59 +778,34 @@ export default function Create({
                                 )}
                             </div>
 
-                            {/* Total Harga (readonly) */}
+                            {/* Realisasi (Auto-calculated) */}
                             <div>
                                 <label className="mb-2 block text-sm font-medium text-gray-700">
-                                    Total Harga
+                                    Realisasi
                                 </label>
                                 <input
                                     type="text"
-                                    value={new Intl.NumberFormat('id-ID', {
-                                        style: 'currency',
-                                        currency: 'IDR',
-                                    }).format(formData.total_harga)}
+                                    value={formatCurrency(formData.realisasi)}
                                     readOnly
                                     className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 focus:border-main focus:outline-none focus:ring-2 focus:ring-main/20"
                                 />
+                                {errors.realisasi && (
+                                    <p className="mt-1 flex items-center text-sm text-red-600">
+                                        <svg
+                                            className="mr-1 h-4 w-4 flex-shrink-0"
+                                            fill="currentColor"
+                                            viewBox="0 0 20 20"
+                                        >
+                                            <path
+                                                fillRule="evenodd"
+                                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                                clipRule="evenodd"
+                                            />
+                                        </svg>
+                                        {errors.realisasi}
+                                    </p>
+                                )}
                             </div>
-                        </div>
-
-                        {/* Realisasi */}
-                        <div>
-                            <label className="mb-2 block text-sm font-medium text-gray-700">
-                                Realisasi *
-                            </label>
-                            <input
-                                type="number"
-                                step="0.01"
-                                min="0"
-                                value={formData.realisasi}
-                                onChange={(e) =>
-                                    setFormData({
-                                        realisasi:
-                                            parseFloat(e.target.value) || 0,
-                                    })
-                                }
-                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out hover:border-main focus:border-main focus:outline-none focus:ring-2 focus:ring-main"
-                                placeholder="Masukkan nilai realisasi..."
-                                required
-                            />
-                            {errors.realisasi && (
-                                <p className="mt-1 flex items-center text-sm text-red-600">
-                                    <svg
-                                        className="mr-1 h-4 w-4 flex-shrink-0"
-                                        fill="currentColor"
-                                        viewBox="0 0 20 20"
-                                    >
-                                        <path
-                                            fillRule="evenodd"
-                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                                            clipRule="evenodd"
-                                        />
-                                    </svg>
-                                    {errors.realisasi}
-                                </p>
-                            )}
                         </div>
 
                         {/* Tujuan Pembayaran */}

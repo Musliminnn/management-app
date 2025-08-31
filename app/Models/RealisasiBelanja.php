@@ -19,8 +19,8 @@ class RealisasiBelanja extends Model
         'sumber_dana',
         'nama_standar_harga',
         'spesifikasi',
-        'koefisien',
-        'harga_satuan',
+        'koefisien', // Koefisien realisasi (bukan dari DPA)
+        'harga_satuan', // Harga satuan realisasi (bukan dari DPA)
         'realisasi',
         'tujuan_pembayaran',
         'user_id'
