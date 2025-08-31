@@ -11,8 +11,9 @@ export interface RealisasiBelanjaFormData {
     sumber_dana: string;
     nama_standar_harga: string;
     spesifikasi: string;
-    koefisien: number;
+    koefisien: string;
     harga_satuan: number;
+    total_harga: number;
     realisasi: number;
     tujuan_pembayaran: string;
 }
@@ -51,8 +52,9 @@ interface DropdownOptions {
         keterangan_belanja: string;
         sumber_dana: string;
         spesifikasi: string;
-        koefisien: number;
+        koefisien: string;
         harga_satuan: number;
+        total_harga: number;
         kode_akun: string;
     }>;
 }
@@ -103,8 +105,9 @@ const initialFormData: RealisasiBelanjaFormData = {
     sumber_dana: '',
     nama_standar_harga: '',
     spesifikasi: '',
-    koefisien: 0,
+    koefisien: '',
     harga_satuan: 0,
+    total_harga: 0,
     realisasi: 0,
     tujuan_pembayaran: '',
 };
@@ -167,12 +170,6 @@ export const useRealisasiBelanjaStore = create<RealisasiBelanjaState>()(
                     errors: {},
                 }),
 
-            // Computed
-            getTotalHarga: () => {
-                const { formData } = get();
-                return formData.koefisien * formData.harga_satuan;
-            },
-
             isFormValid: () => {
                 const { formData } = get();
                 const requiredFields: (keyof RealisasiBelanjaFormData)[] = [
@@ -191,7 +188,7 @@ export const useRealisasiBelanjaStore = create<RealisasiBelanjaState>()(
                 return requiredFields.every(field => {
                     const value = formData[field];
                     return value !== '' && value !== null && value !== undefined;
-                }) && formData.koefisien > 0 && formData.harga_satuan > 0 && formData.realisasi > 0;
+                }) && formData.koefisien !== '' && formData.harga_satuan > 0 && formData.realisasi > 0;
             },
         }),
         {

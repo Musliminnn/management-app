@@ -19,8 +19,9 @@ interface TrxBelanjaOption {
     keterangan_belanja: string;
     sumber_dana: string;
     spesifikasi: string;
-    koefisien: number;
+    koefisien: string;
     harga_satuan: number;
+    total_harga: number;
     kode_akun: string;
 }
 
@@ -45,7 +46,6 @@ export default function Create({
         errors,
         setErrors,
         clearErrors,
-        getTotalHarga,
         isFormValid,
     } = useRealisasiBelanjaStore();
 
@@ -126,6 +126,47 @@ export default function Create({
         return unique.filter(Boolean);
     };
 
+    // Get nama_standar_harga options based on selected sumber_dana
+    const getNamaStandarHargaOptions = () => {
+        if (
+            !formData.kode_akun ||
+            !formData.kelompok_belanja ||
+            !formData.keterangan_belanja ||
+            !formData.sumber_dana
+        )
+            return [];
+        const filtered = trxBelanja.filter(
+            (item) =>
+                item.kode_akun === formData.kode_akun &&
+                item.paket === formData.kelompok_belanja &&
+                item.keterangan_belanja === formData.keterangan_belanja &&
+                item.sumber_dana === formData.sumber_dana,
+        );
+        return filtered; // Return full objects for nama standar harga
+    };
+
+    // Get spesifikasi options based on selected nama_standar_harga
+    const getSpesifikasiOptions = () => {
+        if (
+            !formData.kode_akun ||
+            !formData.kelompok_belanja ||
+            !formData.keterangan_belanja ||
+            !formData.sumber_dana ||
+            !formData.nama_standar_harga
+        )
+            return [];
+        const filtered = trxBelanja.filter(
+            (item) =>
+                item.kode_akun === formData.kode_akun &&
+                item.paket === formData.kelompok_belanja &&
+                item.keterangan_belanja === formData.keterangan_belanja &&
+                item.sumber_dana === formData.sumber_dana &&
+                item.nama === formData.nama_standar_harga,
+        );
+        const unique = [...new Set(filtered.map((item) => item.spesifikasi))];
+        return unique.filter(Boolean);
+    };
+
     // Clear keterangan_belanja when kelompok_belanja changes
     useEffect(() => {
         if (formData.kelompok_belanja) {
@@ -139,6 +180,20 @@ export default function Create({
             setFormData({ sumber_dana: '' });
         }
     }, [formData.keterangan_belanja]);
+
+    // Clear nama_standar_harga when sumber_dana changes
+    useEffect(() => {
+        if (formData.sumber_dana) {
+            setFormData({ nama_standar_harga: '' });
+        }
+    }, [formData.sumber_dana]);
+
+    // Clear spesifikasi when nama_standar_harga changes
+    useEffect(() => {
+        if (formData.nama_standar_harga) {
+            setFormData({ spesifikasi: '' });
+        }
+    }, [formData.nama_standar_harga]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -176,6 +231,46 @@ export default function Create({
             koefisien: selectedTrx.koefisien,
             harga_satuan: selectedTrx.harga_satuan,
         });
+    };
+
+    // Handle spesifikasi selection to auto-fill koefisien, harga_satuan, total_harga
+    const handleSpesifikasiSelect = (selectedSpesifikasi: string) => {
+        if (!selectedSpesifikasi) {
+            setFormData({
+                spesifikasi: '',
+                koefisien: '',
+                harga_satuan: 0,
+                total_harga: 0,
+            });
+            return;
+        }
+
+        // Find the exact trx_belanja item based on all selected criteria
+        const selectedTrx = trxBelanja.find(
+            (item) =>
+                item.kode_akun === formData.kode_akun &&
+                item.paket === formData.kelompok_belanja &&
+                item.keterangan_belanja === formData.keterangan_belanja &&
+                item.sumber_dana === formData.sumber_dana &&
+                item.nama === formData.nama_standar_harga &&
+                item.spesifikasi === selectedSpesifikasi,
+        );
+
+        if (selectedTrx) {
+            setFormData({
+                spesifikasi: selectedTrx.spesifikasi,
+                koefisien: selectedTrx.koefisien,
+                harga_satuan: selectedTrx.harga_satuan,
+                total_harga: selectedTrx.total_harga,
+            });
+        } else {
+            setFormData({
+                spesifikasi: selectedSpesifikasi,
+                koefisien: '',
+                harga_satuan: 0,
+                total_harga: 0,
+            });
+        }
     };
 
     return (
@@ -439,7 +534,7 @@ export default function Create({
                                     value={formData.nama_standar_harga}
                                     onChange={(e) => {
                                         const selectedTrx =
-                                            filteredTrxBelanja.find(
+                                            getNamaStandarHargaOptions().find(
                                                 (item) =>
                                                     item.nama ===
                                                     e.target.value,
@@ -450,16 +545,26 @@ export default function Create({
                                     }}
                                     className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                     required
-                                    disabled={!formData.kode_akun}
+                                    disabled={
+                                        !formData.kode_akun ||
+                                        !formData.kelompok_belanja ||
+                                        !formData.keterangan_belanja ||
+                                        !formData.sumber_dana
+                                    }
                                 >
                                     <option value="">
                                         Pilih Standar Harga
                                     </option>
-                                    {filteredTrxBelanja.map((item) => (
-                                        <option key={item.id} value={item.nama}>
-                                            {item.nama}
-                                        </option>
-                                    ))}
+                                    {getNamaStandarHargaOptions().map(
+                                        (item) => (
+                                            <option
+                                                key={item.id}
+                                                value={item.nama}
+                                            >
+                                                {item.nama}
+                                            </option>
+                                        ),
+                                    )}
                                 </select>
                                 {errors.nama_standar_harga && (
                                     <p className="mt-1 text-sm text-red-600">
@@ -477,20 +582,24 @@ export default function Create({
                             <select
                                 value={formData.spesifikasi}
                                 onChange={(e) =>
-                                    setFormData({ spesifikasi: e.target.value })
+                                    handleSpesifikasiSelect(e.target.value)
                                 }
                                 className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                                 required
-                                disabled={!formData.kode_akun}
+                                disabled={
+                                    !formData.kode_akun ||
+                                    !formData.kelompok_belanja ||
+                                    !formData.keterangan_belanja ||
+                                    !formData.sumber_dana ||
+                                    !formData.nama_standar_harga
+                                }
                             >
                                 <option value="">Pilih Spesifikasi</option>
-                                {getUniqueOptions('spesifikasi').map(
-                                    (spek, index) => (
-                                        <option key={index} value={spek}>
-                                            {spek}
-                                        </option>
-                                    ),
-                                )}
+                                {getSpesifikasiOptions().map((spek, index) => (
+                                    <option key={index} value={spek}>
+                                        {spek}
+                                    </option>
+                                ))}
                             </select>
                             {errors.spesifikasi && (
                                 <p className="mt-1 text-sm text-red-600">
@@ -506,18 +615,10 @@ export default function Create({
                                     Koefisien *
                                 </label>
                                 <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
+                                    type="text"
                                     value={formData.koefisien}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            koefisien:
-                                                parseFloat(e.target.value) || 0,
-                                        })
-                                    }
-                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    required
+                                    readOnly
+                                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2"
                                 />
                                 {errors.koefisien && (
                                     <p className="mt-1 text-sm text-red-600">
@@ -532,18 +633,13 @@ export default function Create({
                                     Harga Satuan *
                                 </label>
                                 <input
-                                    type="number"
-                                    step="0.01"
-                                    min="0"
-                                    value={formData.harga_satuan}
-                                    onChange={(e) =>
-                                        setFormData({
-                                            harga_satuan:
-                                                parseFloat(e.target.value) || 0,
-                                        })
-                                    }
-                                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                    required
+                                    type="text"
+                                    value={new Intl.NumberFormat('id-ID', {
+                                        style: 'currency',
+                                        currency: 'IDR',
+                                    }).format(formData.harga_satuan)}
+                                    readOnly
+                                    className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2"
                                 />
                                 {errors.harga_satuan && (
                                     <p className="mt-1 text-sm text-red-600">
@@ -562,7 +658,7 @@ export default function Create({
                                     value={new Intl.NumberFormat('id-ID', {
                                         style: 'currency',
                                         currency: 'IDR',
-                                    }).format(getTotalHarga())}
+                                    }).format(formData.total_harga)}
                                     readOnly
                                     className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2"
                                 />
