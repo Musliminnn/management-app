@@ -20,6 +20,18 @@ export interface RealisasiBelanjaFormData {
     tujuan_pembayaran: string;
 }
 
+export interface BulkInputItem {
+    id: string;
+    nama_standar_harga: string;
+    spesifikasi: string;
+    koefisien_dpa: string;
+    harga_satuan_dpa: number;
+    pagu_anggaran: number;
+    koefisien_realisasi: number;
+    harga_satuan_realisasi: number;
+    realisasi: number;
+}
+
 interface RealisasiBelanjaItem extends RealisasiBelanjaFormData {
     id: number;
     user_id: number;
@@ -65,6 +77,9 @@ interface RealisasiBelanjaState {
     // Form data
     formData: RealisasiBelanjaFormData;
     
+    // Bulk input data
+    bulkInputItems: BulkInputItem[];
+    
     // Dropdown options
     dropdownOptions: DropdownOptions;
     
@@ -82,6 +97,10 @@ interface RealisasiBelanjaState {
     
     // Actions
     setFormData: (data: Partial<RealisasiBelanjaFormData>) => void;
+    setBulkInputItems: (items: BulkInputItem[]) => void;
+    addBulkInputItem: (item: BulkInputItem) => void;
+    removeBulkInputItem: (id: string) => void;
+    clearBulkInputItems: () => void;
     setDropdownOptions: (options: Partial<DropdownOptions>) => void;
     setLoading: (loading: boolean) => void;
     setSubmitting: (submitting: boolean) => void;
@@ -128,6 +147,7 @@ export const useRealisasiBelanjaStore = create<RealisasiBelanjaState>()(
         (set, get) => ({
             // Initial state
             formData: initialFormData,
+            bulkInputItems: [],
             dropdownOptions: initialDropdownOptions,
             isLoading: false,
             isSubmitting: false,
@@ -141,6 +161,22 @@ export const useRealisasiBelanjaStore = create<RealisasiBelanjaState>()(
                 set((state) => ({
                     formData: { ...state.formData, ...data },
                 })),
+
+            setBulkInputItems: (items) =>
+                set({ bulkInputItems: items }),
+
+            addBulkInputItem: (item) =>
+                set((state) => ({
+                    bulkInputItems: [...state.bulkInputItems, item],
+                })),
+
+            removeBulkInputItem: (id) =>
+                set((state) => ({
+                    bulkInputItems: state.bulkInputItems.filter(item => item.id !== id),
+                })),
+
+            clearBulkInputItems: () =>
+                set({ bulkInputItems: [] }),
 
             setDropdownOptions: (options) =>
                 set((state) => ({
@@ -171,8 +207,14 @@ export const useRealisasiBelanjaStore = create<RealisasiBelanjaState>()(
             resetForm: () =>
                 set({
                     formData: initialFormData,
+                    bulkInputItems: [],
                     errors: {},
                 }),
+
+            getTotalHarga: () => {
+                const { formData } = get();
+                return formData.koefisien_realisasi * formData.harga_satuan_realisasi;
+            },
 
             isFormValid: () => {
                 const { formData } = get();

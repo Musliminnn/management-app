@@ -3,7 +3,10 @@ import CustomDayPicker from '@/Components/CustomDayPicker';
 import RealisasiDropdown from '@/Components/RealisasiDropdown';
 import SimpleDropdown from '@/Components/SimpleDropdown';
 import { ParentLayout } from '@/Layouts/MainLayout';
-import { useRealisasiBelanjaStore } from '@/stores/realisasiBelanjaStore';
+import {
+    BulkInputItem,
+    useRealisasiBelanjaStore,
+} from '@/stores/realisasiBelanjaStore';
 import {
     calculateMaxKoefisien,
     formatCurrency,
@@ -60,6 +63,10 @@ export default function Create({
         clearErrors,
         isFormValid,
         resetForm,
+        bulkInputItems,
+        addBulkInputItem,
+        removeBulkInputItem,
+        clearBulkInputItems,
     } = useRealisasiBelanjaStore();
 
     const [filteredSubKegiatan, setFilteredSubKegiatan] = useState<
@@ -118,6 +125,58 @@ export default function Create({
     useEffect(() => {
         resetForm();
     }, []); // Empty dependency array means this runs only once on mount
+
+    // Function to add current form data to bulk input
+    const addToBulkInput = () => {
+        if (
+            !formData.nama_standar_harga ||
+            !formData.spesifikasi ||
+            !dpaValues.koefisien ||
+            dpaValues.harga_satuan === 0 ||
+            formData.koefisien_realisasi === 0 ||
+            formData.harga_satuan_realisasi === 0
+        ) {
+            setErrors({
+                ...errors,
+                bulk: 'Mohon lengkapi semua data yang diperlukan sebelum menambahkan ke Preview Realisasi',
+            });
+            return;
+        }
+
+        const newItem: BulkInputItem = {
+            id: `${Date.now()}-${Math.random()}`,
+            nama_standar_harga: formData.nama_standar_harga,
+            spesifikasi: formData.spesifikasi,
+            koefisien_dpa: dpaValues.koefisien,
+            harga_satuan_dpa: dpaValues.harga_satuan,
+            pagu_anggaran: dpaValues.total_harga,
+            koefisien_realisasi: formData.koefisien_realisasi,
+            harga_satuan_realisasi: formData.harga_satuan_realisasi,
+            realisasi: formData.realisasi,
+        };
+
+        addBulkInputItem(newItem);
+
+        // Clear bulk error
+        const newErrors = { ...errors };
+        delete newErrors.bulk;
+        setErrors(newErrors);
+
+        // Reset specific fields for next entry
+        setFormData({
+            nama_standar_harga: '',
+            spesifikasi: '',
+            koefisien_realisasi: 0,
+            harga_satuan_realisasi: 0,
+            realisasi: 0,
+        });
+        setHargaSatuanDisplay('');
+        setDpaValues({
+            koefisien: '',
+            harga_satuan: 0,
+            total_harga: 0,
+        });
+    };
 
     // Update harga satuan display when form data changes
     useEffect(() => {
@@ -367,50 +426,96 @@ export default function Create({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!isFormValid()) {
-            setErrors({ form: 'Mohon lengkapi semua field yang diperlukan' });
-            return;
-        }
-
-        // Additional validation for koefisien realisasi
-        const koefisienValidation = validateKoefisienRealisasi(
-            formData.koefisien_realisasi,
-            dpaValues.koefisien,
-        );
-
-        // Additional validation for realisasi against pagu anggaran
-        const realisasiValidation = validateRealisasiPagu(
-            formData.realisasi,
-            dpaValues.total_harga,
-        );
-
-        if (!koefisienValidation.isValid || !realisasiValidation.isValid) {
-            const formErrors: Record<string, string> = {
-                form: 'Terdapat kesalahan dalam form',
-            };
-
-            if (!koefisienValidation.isValid) {
-                formErrors.koefisien = koefisienValidation.errorMessage!;
+        // Check if we have bulk input items or regular form submission
+        if (bulkInputItems.length > 0) {
+            // For bulk submission, we need at least tujuan_pembayaran and basic form data
+            if (
+                !formData.tanggal ||
+                !formData.kode_kegiatan ||
+                !formData.kode_sub_kegiatan ||
+                !formData.kode_akun ||
+                !formData.tujuan_pembayaran
+            ) {
+                setErrors({
+                    form: 'Mohon lengkapi semua field dasar dan tujuan pembayaran untuk bulk input',
+                });
+                return;
+            }
+        } else {
+            // Regular form validation
+            if (!isFormValid()) {
+                setErrors({
+                    form: 'Mohon lengkapi semua field yang diperlukan',
+                });
+                return;
             }
 
-            if (!realisasiValidation.isValid) {
-                formErrors.realisasi = realisasiValidation.errorMessage!;
-            }
+            // Additional validation for koefisien realisasi
+            const koefisienValidation = validateKoefisienRealisasi(
+                formData.koefisien_realisasi,
+                dpaValues.koefisien,
+            );
 
-            setErrors(formErrors);
-            return;
+            // Additional validation for realisasi against pagu anggaran
+            const realisasiValidation = validateRealisasiPagu(
+                formData.realisasi,
+                dpaValues.total_harga,
+            );
+
+            if (!koefisienValidation.isValid || !realisasiValidation.isValid) {
+                const formErrors: Record<string, string> = {
+                    form: 'Terdapat kesalahan dalam form',
+                };
+
+                if (!koefisienValidation.isValid) {
+                    formErrors.koefisien = koefisienValidation.errorMessage!;
+                }
+
+                if (!realisasiValidation.isValid) {
+                    formErrors.realisasi = realisasiValidation.errorMessage!;
+                }
+
+                setErrors(formErrors);
+                return;
+            }
         }
 
         setSubmitting(true);
         clearErrors();
 
         try {
-            // Prepare data for submission - use realisasi values for koefisien and harga_satuan
-            const submitData = {
-                ...formData,
-                koefisien: formData.koefisien_realisasi, // Save realisasi value as koefisien
-                harga_satuan: formData.harga_satuan_realisasi, // Save realisasi value as harga_satuan
-            };
+            // Prepare data for submission
+            let submitData;
+
+            if (bulkInputItems.length > 0) {
+                // For bulk submission, create multiple records
+                submitData = {
+                    bulk_items: bulkInputItems.map((item) => ({
+                        tanggal: formData.tanggal,
+                        kode_kegiatan: formData.kode_kegiatan,
+                        kode_sub_kegiatan: formData.kode_sub_kegiatan,
+                        kode_akun: formData.kode_akun,
+                        kelompok_belanja: formData.kelompok_belanja,
+                        keterangan_belanja: formData.keterangan_belanja,
+                        sumber_dana: formData.sumber_dana,
+                        nama_standar_harga: item.nama_standar_harga,
+                        spesifikasi: item.spesifikasi,
+                        koefisien: item.koefisien_realisasi,
+                        harga_satuan: item.harga_satuan_realisasi,
+                        realisasi: item.realisasi,
+                        tujuan_pembayaran: formData.tujuan_pembayaran,
+                    })),
+                    is_bulk: true,
+                };
+            } else {
+                // Regular single submission
+                submitData = {
+                    ...formData,
+                    koefisien: formData.koefisien_realisasi, // Save realisasi value as koefisien
+                    harga_satuan: formData.harga_satuan_realisasi, // Save realisasi value as harga_satuan
+                    is_bulk: false,
+                };
+            }
 
             router.post('/realisasi-belanja', submitData as any, {
                 onSuccess: () => {
@@ -917,6 +1022,241 @@ export default function Create({
                             </p>
                         )}
 
+                        {/* Preview Realisasi - Bulk Input Section */}
+                        <div className="rounded-lg border border-gray-200 bg-white p-6">
+                            <div className="mb-4 flex items-center justify-between">
+                                <h3 className="text-lg font-medium text-gray-900">
+                                    Preview Realisasi
+                                </h3>
+                                <CustomButton
+                                    type="button"
+                                    variant="primary"
+                                    onClick={addToBulkInput}
+                                    disabled={
+                                        !formData.nama_standar_harga ||
+                                        !formData.spesifikasi ||
+                                        !dpaValues.koefisien ||
+                                        dpaValues.harga_satuan === 0 ||
+                                        formData.koefisien_realisasi === 0 ||
+                                        formData.harga_satuan_realisasi === 0
+                                    }
+                                    className="px-4 py-2"
+                                >
+                                    Tambah ke Preview
+                                </CustomButton>
+                            </div>
+
+                            {errors.bulk && (
+                                <div className="mb-4 flex items-center rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+                                    <svg
+                                        className="mr-2 h-5 w-5 flex-shrink-0"
+                                        fill="currentColor"
+                                        viewBox="0 0 20 20"
+                                    >
+                                        <path
+                                            fillRule="evenodd"
+                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                            clipRule="evenodd"
+                                        />
+                                    </svg>
+                                    {errors.bulk}
+                                </div>
+                            )}
+
+                            {bulkInputItems.length === 0 ? (
+                                <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-8 text-center">
+                                    <div className="text-gray-500">
+                                        <svg
+                                            className="mx-auto h-12 w-12 text-gray-400"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                                            />
+                                        </svg>
+                                        <p className="mt-2 text-sm">
+                                            Belum ada data realisasi
+                                        </p>
+                                        <p className="text-xs text-gray-400">
+                                            Lengkapi form di atas dan klik
+                                            "Tambah ke Preview"
+                                        </p>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full table-auto border-collapse text-sm">
+                                        <thead className="bg-gray-50">
+                                            <tr>
+                                                <th className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    Nama Standar Harga
+                                                </th>
+                                                <th className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    Spesifikasi
+                                                </th>
+                                                <th className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    Koefisien DPA
+                                                </th>
+                                                <th className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    Harga Satuan DPA
+                                                </th>
+                                                <th className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    Pagu Anggaran
+                                                </th>
+                                                <th className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    Koefisien Realisasi
+                                                </th>
+                                                <th className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    Harga Satuan Realisasi
+                                                </th>
+                                                <th className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    Realisasi
+                                                </th>
+                                                <th className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center text-xs font-medium uppercase tracking-wider text-gray-500">
+                                                    Aksi
+                                                </th>
+                                            </tr>
+                                        </thead>
+                                        <tbody className="bg-white">
+                                            {bulkInputItems.map(
+                                                (item, index) => (
+                                                    <tr
+                                                        key={item.id}
+                                                        className={
+                                                            index % 2 === 0
+                                                                ? 'bg-white'
+                                                                : 'bg-gray-50'
+                                                        }
+                                                    >
+                                                        <td className="whitespace-nowrap border border-gray-200 px-3 py-2 text-sm text-gray-900">
+                                                            <div
+                                                                className="max-w-[200px] truncate"
+                                                                title={
+                                                                    item.nama_standar_harga
+                                                                }
+                                                            >
+                                                                {
+                                                                    item.nama_standar_harga
+                                                                }
+                                                            </div>
+                                                        </td>
+                                                        <td className="whitespace-nowrap border border-gray-200 px-3 py-2 text-sm text-gray-900">
+                                                            <div
+                                                                className="max-w-[250px] truncate"
+                                                                title={
+                                                                    item.spesifikasi
+                                                                }
+                                                            >
+                                                                {
+                                                                    item.spesifikasi
+                                                                }
+                                                            </div>
+                                                        </td>
+                                                        <td className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center text-sm text-gray-900">
+                                                            {item.koefisien_dpa}
+                                                        </td>
+                                                        <td className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center text-sm text-gray-900">
+                                                            {formatCurrency(
+                                                                item.harga_satuan_dpa,
+                                                            )}
+                                                        </td>
+                                                        <td className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center text-sm text-gray-900">
+                                                            {formatCurrency(
+                                                                item.pagu_anggaran,
+                                                            )}
+                                                        </td>
+                                                        <td className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center text-sm text-gray-900">
+                                                            {
+                                                                item.koefisien_realisasi
+                                                            }
+                                                        </td>
+                                                        <td className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center text-sm text-gray-900">
+                                                            {formatCurrency(
+                                                                item.harga_satuan_realisasi,
+                                                            )}
+                                                        </td>
+                                                        <td className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center text-sm font-medium text-gray-900">
+                                                            {formatCurrency(
+                                                                item.realisasi,
+                                                            )}
+                                                        </td>
+                                                        <td className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center">
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    removeBulkInputItem(
+                                                                        item.id,
+                                                                    )
+                                                                }
+                                                                className="text-red-600 hover:text-red-900"
+                                                                title="Hapus item"
+                                                            >
+                                                                <svg
+                                                                    className="h-4 w-4"
+                                                                    fill="none"
+                                                                    viewBox="0 0 24 24"
+                                                                    stroke="currentColor"
+                                                                >
+                                                                    <path
+                                                                        strokeLinecap="round"
+                                                                        strokeLinejoin="round"
+                                                                        strokeWidth={
+                                                                            2
+                                                                        }
+                                                                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16"
+                                                                    />
+                                                                </svg>
+                                                            </button>
+                                                        </td>
+                                                    </tr>
+                                                ),
+                                            )}
+                                        </tbody>
+                                        <tfoot className="bg-gray-50">
+                                            <tr>
+                                                <td
+                                                    colSpan={7}
+                                                    className="whitespace-nowrap border border-gray-200 px-3 py-2 text-right text-sm font-medium text-gray-900"
+                                                >
+                                                    Total Realisasi:
+                                                </td>
+                                                <td className="whitespace-nowrap border border-gray-200 px-3 py-2 text-right text-sm font-bold text-gray-900">
+                                                    {formatCurrency(
+                                                        bulkInputItems.reduce(
+                                                            (sum, item) =>
+                                                                sum +
+                                                                item.realisasi,
+                                                            0,
+                                                        ),
+                                                    )}
+                                                </td>
+                                                <td className="whitespace-nowrap border border-gray-200 px-3 py-2 text-center">
+                                                    {bulkInputItems.length >
+                                                        0 && (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() =>
+                                                                clearBulkInputItems()
+                                                            }
+                                                            className="text-xs text-red-600 hover:text-red-900"
+                                                            title="Hapus semua"
+                                                        >
+                                                            Hapus Semua
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+
                         {/* Tujuan Pembayaran */}
                         <div>
                             <label className="mb-2 block text-sm font-medium text-gray-700">
@@ -968,7 +1308,11 @@ export default function Create({
                             <CustomButton
                                 type="submit"
                                 variant="primary"
-                                disabled={isSubmitting || !isFormValid()}
+                                disabled={
+                                    isSubmitting ||
+                                    (!isFormValid() &&
+                                        bulkInputItems.length === 0)
+                                }
                                 className="min-w-[120px] px-6 py-2.5"
                             >
                                 {isSubmitting ? (
@@ -994,6 +1338,8 @@ export default function Create({
                                         </svg>
                                         Menyimpan...
                                     </div>
+                                ) : bulkInputItems.length > 0 ? (
+                                    `Simpan ${bulkInputItems.length} Realisasi`
                                 ) : (
                                     'Simpan'
                                 )}
