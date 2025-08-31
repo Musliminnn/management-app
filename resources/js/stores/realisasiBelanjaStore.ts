@@ -96,7 +96,7 @@ interface RealisasiBelanjaState {
 }
 
 const initialFormData: RealisasiBelanjaFormData = {
-    tanggal: new Date().toISOString().split('T')[0],
+    tanggal: '',
     kode_kegiatan: '',
     kode_sub_kegiatan: '',
     kode_akun: '',

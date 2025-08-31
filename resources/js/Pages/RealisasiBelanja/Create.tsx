@@ -48,6 +48,7 @@ export default function Create({
         setErrors,
         clearErrors,
         isFormValid,
+        resetForm,
     } = useRealisasiBelanjaStore();
 
     const [filteredSubKegiatan, setFilteredSubKegiatan] = useState<
@@ -57,6 +58,11 @@ export default function Create({
     const [filteredTrxBelanja, setFilteredTrxBelanja] = useState<
         TrxBelanjaOption[]
     >([]);
+
+    // Reset form to initial empty state when component mounts
+    useEffect(() => {
+        resetForm();
+    }, []); // Empty dependency array means this runs only once on mount
 
     // Filter sub kegiatan based on selected kegiatan
     useEffect(() => {
@@ -104,20 +110,6 @@ export default function Create({
             setFilteredTrxBelanja([]);
         }
     }, [formData.kode_akun, trxBelanja]);
-
-    // Get unique dropdown options from TrxBelanja based on selected akun
-    const getUniqueOptions = (field: string) => {
-        if (!formData.kode_akun) return [];
-        const filtered = trxBelanja.filter(
-            (item) => item.kode_akun === formData.kode_akun,
-        );
-        const unique = [
-            ...new Set(
-                filtered.map((item) => item[field as keyof TrxBelanjaOption]),
-            ),
-        ];
-        return unique.filter(Boolean);
-    };
 
     // Get kelompok_belanja (paket) options based on selected akun
     const getKelompokBelanjaOptions = () => {
@@ -328,15 +320,6 @@ export default function Create({
             console.error('Submit error:', error);
             setSubmitting(false);
         }
-    };
-
-    const handleTrxBelanjaSelect = (selectedTrx: TrxBelanjaOption) => {
-        setFormData({
-            nama_standar_harga: selectedTrx.nama,
-            spesifikasi: selectedTrx.spesifikasi,
-            koefisien: selectedTrx.koefisien,
-            harga_satuan: selectedTrx.harga_satuan,
-        });
     };
 
     // Handle spesifikasi selection to auto-fill koefisien, harga_satuan, total_harga
