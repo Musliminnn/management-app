@@ -5,9 +5,12 @@ import SimpleDropdown from '@/Components/SimpleDropdown';
 import { ParentLayout } from '@/Layouts/MainLayout';
 import { useRealisasiBelanjaStore } from '@/stores/realisasiBelanjaStore';
 import {
+    calculateMaxKoefisien,
     formatCurrency,
     formatCurrencyNumber,
     handleCurrencyInputChange,
+    validateKoefisienRealisasi,
+    validateRealisasiPagu,
 } from '@/utils/currencyUtils';
 import { Head, router } from '@inertiajs/react';
 import React, { useEffect, useState } from 'react';
@@ -77,12 +80,39 @@ export default function Create({
         total_harga: 0,
     });
 
+    // Helper function to calculate maximum koefisien from DPA string
+    // Now using utility function for consistency
+    const maxKoefisien = calculateMaxKoefisien(dpaValues.koefisien);
+
     // Auto-calculate realisasi when koefisien_realisasi or harga_satuan_realisasi changes
     useEffect(() => {
         const realisasi =
             formData.koefisien_realisasi * formData.harga_satuan_realisasi;
+
+        // Validate realisasi against Pagu Anggaran
+        const realisasiValidation = validateRealisasiPagu(
+            realisasi,
+            dpaValues.total_harga,
+        );
+
+        if (!realisasiValidation.isValid) {
+            setErrors({
+                ...errors,
+                realisasi: realisasiValidation.errorMessage!,
+            });
+        } else {
+            // Clear realisasi error if valid
+            const newErrors = { ...errors };
+            delete newErrors.realisasi;
+            setErrors(newErrors);
+        }
+
         setFormData({ realisasi });
-    }, [formData.koefisien_realisasi, formData.harga_satuan_realisasi]);
+    }, [
+        formData.koefisien_realisasi,
+        formData.harga_satuan_realisasi,
+        dpaValues.total_harga,
+    ]);
 
     // Reset form to initial empty state when component mounts
     useEffect(() => {
@@ -339,6 +369,35 @@ export default function Create({
 
         if (!isFormValid()) {
             setErrors({ form: 'Mohon lengkapi semua field yang diperlukan' });
+            return;
+        }
+
+        // Additional validation for koefisien realisasi
+        const koefisienValidation = validateKoefisienRealisasi(
+            formData.koefisien_realisasi,
+            dpaValues.koefisien,
+        );
+
+        // Additional validation for realisasi against pagu anggaran
+        const realisasiValidation = validateRealisasiPagu(
+            formData.realisasi,
+            dpaValues.total_harga,
+        );
+
+        if (!koefisienValidation.isValid || !realisasiValidation.isValid) {
+            const formErrors: Record<string, string> = {
+                form: 'Terdapat kesalahan dalam form',
+            };
+
+            if (!koefisienValidation.isValid) {
+                formErrors.koefisien = koefisienValidation.errorMessage!;
+            }
+
+            if (!realisasiValidation.isValid) {
+                formErrors.realisasi = realisasiValidation.errorMessage!;
+            }
+
+            setErrors(formErrors);
             return;
         }
 
@@ -701,39 +760,58 @@ export default function Create({
                             <div>
                                 <label className="mb-2 block text-sm font-medium text-gray-700">
                                     Koefisien *
+                                    {maxKoefisien > 0 && (
+                                        <span className="ml-1 text-xs text-gray-500">
+                                            (Maksimal: {maxKoefisien})
+                                        </span>
+                                    )}
                                 </label>
                                 <input
                                     type="number"
                                     step="0.01"
                                     min="0"
+                                    max={
+                                        maxKoefisien > 0
+                                            ? maxKoefisien
+                                            : undefined
+                                    }
                                     value={formData.koefisien_realisasi || ''}
                                     onChange={(e) => {
                                         const value =
                                             parseFloat(e.target.value) || 0;
+
+                                        // Validate against max koefisien from DPA
+                                        const validation =
+                                            validateKoefisienRealisasi(
+                                                value,
+                                                dpaValues.koefisien,
+                                            );
+
+                                        if (!validation.isValid) {
+                                            setErrors({
+                                                ...errors,
+                                                koefisien:
+                                                    validation.errorMessage!,
+                                            });
+                                        } else {
+                                            // Clear error if valid
+                                            const newErrors = { ...errors };
+                                            delete newErrors.koefisien;
+                                            setErrors(newErrors);
+                                        }
+
                                         setFormData({
                                             koefisien_realisasi: value,
                                         });
                                     }}
-                                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out hover:border-main focus:border-main focus:outline-none focus:ring-2 focus:ring-main"
+                                    className={`w-full rounded-md border px-3 py-2 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out hover:border-main focus:border-main focus:outline-none focus:ring-2 focus:ring-main ${
+                                        errors.koefisien
+                                            ? 'border-red-300'
+                                            : 'border-gray-300'
+                                    }`}
                                     placeholder="Masukkan koefisien..."
                                     required
                                 />
-                                {errors.koefisien && (
-                                    <p className="mt-1 flex items-center text-sm text-red-600">
-                                        <svg
-                                            className="mr-1 h-4 w-4 flex-shrink-0"
-                                            fill="currentColor"
-                                            viewBox="0 0 20 20"
-                                        >
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                                                clipRule="evenodd"
-                                            />
-                                        </svg>
-                                        {errors.koefisien}
-                                    </p>
-                                )}
                             </div>
 
                             {/* Harga Satuan Realisasi */}
@@ -782,31 +860,62 @@ export default function Create({
                             <div>
                                 <label className="mb-2 block text-sm font-medium text-gray-700">
                                     Realisasi
+                                    {dpaValues.total_harga > 0 && (
+                                        <span className="ml-1 text-xs text-gray-500">
+                                            (Maksimal:{' '}
+                                            {formatCurrency(
+                                                dpaValues.total_harga,
+                                            )}
+                                            )
+                                        </span>
+                                    )}
                                 </label>
                                 <input
                                     type="text"
                                     value={formatCurrency(formData.realisasi)}
                                     readOnly
-                                    className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 focus:border-main focus:outline-none focus:ring-2 focus:ring-main/20"
+                                    className={`w-full cursor-not-allowed rounded-md border px-3 py-2 text-gray-700 focus:border-main focus:outline-none focus:ring-2 focus:ring-main/20 ${
+                                        errors.realisasi
+                                            ? 'border-red-300'
+                                            : 'border-gray-200 bg-gray-50'
+                                    }`}
                                 />
-                                {errors.realisasi && (
-                                    <p className="mt-1 flex items-center text-sm text-red-600">
-                                        <svg
-                                            className="mr-1 h-4 w-4 flex-shrink-0"
-                                            fill="currentColor"
-                                            viewBox="0 0 20 20"
-                                        >
-                                            <path
-                                                fillRule="evenodd"
-                                                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                                                clipRule="evenodd"
-                                            />
-                                        </svg>
-                                        {errors.realisasi}
-                                    </p>
-                                )}
                             </div>
                         </div>
+
+                        {errors.koefisien && (
+                            <p className="mt-1 flex items-center text-sm text-red-600">
+                                <svg
+                                    className="mr-1 h-4 w-4 flex-shrink-0"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path
+                                        fillRule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                        clipRule="evenodd"
+                                    />
+                                </svg>
+                                {errors.koefisien}
+                            </p>
+                        )}
+
+                        {errors.realisasi && (
+                            <p className="mt-1 flex items-center text-sm text-red-600">
+                                <svg
+                                    className="mr-1 h-4 w-4 flex-shrink-0"
+                                    fill="currentColor"
+                                    viewBox="0 0 20 20"
+                                >
+                                    <path
+                                        fillRule="evenodd"
+                                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                        clipRule="evenodd"
+                                    />
+                                </svg>
+                                {errors.realisasi}
+                            </p>
+                        )}
 
                         {/* Tujuan Pembayaran */}
                         <div>

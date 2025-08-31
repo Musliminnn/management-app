@@ -60,3 +60,56 @@ export const handleCurrencyInputChange = (
     onChange(parsed);
     return formatted;
 };
+
+/**
+ * Calculate maximum koefisien from DPA string
+ * Extracts numbers from string like "100 Orang x 2 Paket" and multiplies them
+ */
+export const calculateMaxKoefisien = (koefisienDPA: string): number => {
+    if (!koefisienDPA) return 0;
+    
+    // Extract numbers from string
+    const numbers = koefisienDPA.match(/\d+/g);
+    if (!numbers || numbers.length === 0) return 0;
+    
+    // Multiply all numbers found
+    return numbers.reduce((acc, num) => acc * parseInt(num), 1);
+};
+
+/**
+ * Validate koefisien realisasi against DPA maximum
+ */
+export const validateKoefisienRealisasi = (
+    koefisienRealisasi: number,
+    koefisienDPA: string
+): { isValid: boolean; errorMessage?: string } => {
+    const maxKoefisien = calculateMaxKoefisien(koefisienDPA);
+    
+    if (maxKoefisien > 0 && koefisienRealisasi > maxKoefisien) {
+        return {
+            isValid: false,
+            errorMessage: `Koefisien tidak boleh melebihi ${maxKoefisien} (dari DPA: ${koefisienDPA})`
+        };
+    }
+    
+    return { isValid: true };
+};
+
+/**
+ * Validate realisasi against Pagu Anggaran (total_harga) maximum
+ */
+export const validateRealisasiPagu = (
+    realisasi: number,
+    paguAnggaran: number
+): { isValid: boolean; errorMessage?: string } => {
+    if (paguAnggaran <= 0) return { isValid: true };
+    
+    if (realisasi > paguAnggaran) {
+        return {
+            isValid: false,
+            errorMessage: `Realisasi tidak boleh melebihi Pagu Anggaran ${formatCurrency(paguAnggaran)}`
+        };
+    }
+    
+    return { isValid: true };
+};
