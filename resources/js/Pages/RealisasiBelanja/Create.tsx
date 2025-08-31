@@ -374,7 +374,7 @@ export default function Create({
         <ParentLayout>
             <Head title="Tambah Realisasi Belanja" />
 
-            <div className="mx-auto max-w-4xl p-6">
+            <div className="mx-auto p-6">
                 <div className="rounded-lg border border-gray-100 bg-white shadow-md">
                     <div className="rounded-t-lg bg-gradient-to-r from-main to-main/90 p-6">
                         <h2 className="text-xl font-semibold text-white">
@@ -596,7 +596,7 @@ export default function Create({
                                     type="text"
                                     value={formData.koefisien}
                                     readOnly
-                                    className="w-full cursor-not-allowed rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-700"
+                                    className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 focus:border-main focus:outline-none focus:ring-2 focus:ring-main/20"
                                 />
                                 {errors.koefisien && (
                                     <p className="mt-1 flex items-center text-sm text-red-600">
@@ -628,7 +628,7 @@ export default function Create({
                                         currency: 'IDR',
                                     }).format(formData.harga_satuan)}
                                     readOnly
-                                    className="w-full cursor-not-allowed rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-700"
+                                    className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 focus:border-main focus:outline-none focus:ring-2 focus:ring-main/20"
                                 />
                                 {errors.harga_satuan && (
                                     <p className="mt-1 flex items-center text-sm text-red-600">
@@ -660,7 +660,7 @@ export default function Create({
                                         currency: 'IDR',
                                     }).format(formData.total_harga)}
                                     readOnly
-                                    className="w-full cursor-not-allowed rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-gray-700"
+                                    className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 focus:border-main focus:outline-none focus:ring-2 focus:ring-main/20"
                                 />
                             </div>
                         </div>
