@@ -32,6 +32,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('realisasi-belanja.sub-kegiatan');
     Route::get('/realisasi-belanja/trx-belanja/{kodeAkun}', [RealisasiBelanjaController::class, 'getTrxBelanjaData'])
         ->name('realisasi-belanja.trx-belanja');
+    Route::post('/realisasi-belanja/total-realisasi', [RealisasiBelanjaController::class, 'getTotalRealisasiBySpesifikasi'])
+        ->name('realisasi-belanja.total-realisasi');
 });
 
 Route::get('/dashboard', function () {

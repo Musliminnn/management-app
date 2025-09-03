@@ -86,6 +86,16 @@ export default function Create({
         total_harga: 0,
     });
 
+    // State for existing realisasi total
+    const [existingRealisasiTotal, setExistingRealisasiTotal] =
+        useState<number>(0);
+    const [isLoadingRealisasi, setIsLoadingRealisasi] =
+        useState<boolean>(false);
+
+    // Calculate remaining Pagu Anggaran
+    const remainingPaguAnggaran =
+        dpaValues.total_harga - existingRealisasiTotal;
+
     // Helper function to calculate maximum koefisien from DPA string
     // Now using utility function for consistency
     const maxKoefisien = calculateMaxKoefisien(dpaValues.koefisien);
@@ -95,11 +105,19 @@ export default function Create({
         const realisasi =
             formData.koefisien_realisasi * formData.harga_satuan_realisasi;
 
-        // Validate realisasi against Pagu Anggaran
-        const realisasiValidation = validateRealisasiPagu(
-            realisasi,
-            dpaValues.total_harga,
-        );
+        // Validate realisasi against remaining Pagu Anggaran (original - existing)
+        let realisasiValidation;
+        if (remainingPaguAnggaran > 0) {
+            realisasiValidation = validateRealisasiPagu(
+                realisasi,
+                remainingPaguAnggaran,
+            );
+        } else {
+            realisasiValidation = validateRealisasiPagu(
+                realisasi,
+                dpaValues.total_harga,
+            );
+        }
 
         if (!realisasiValidation.isValid) {
             setErrors({
@@ -118,11 +136,13 @@ export default function Create({
         formData.koefisien_realisasi,
         formData.harga_satuan_realisasi,
         dpaValues.total_harga,
+        remainingPaguAnggaran,
     ]);
 
     // Reset form to initial empty state when component mounts
     useEffect(() => {
         resetForm();
+        setExistingRealisasiTotal(0);
     }, []); // Empty dependency array means this runs only once on mount
 
     // Function to add current form data to bulk input
@@ -146,6 +166,24 @@ export default function Create({
             setErrors({
                 ...errors,
                 bulk: 'Mohon lengkapi semua data yang diperlukan sebelum menambahkan ke Preview Realisasi',
+            });
+            return;
+        }
+
+        // Check if remaining budget is sufficient
+        if (remainingPaguAnggaran <= 0) {
+            setErrors({
+                ...errors,
+                bulk: 'Pagu anggaran untuk spesifikasi ini sudah habis. Tidak dapat menambahkan realisasi baru.',
+            });
+            return;
+        }
+
+        // Check if current realisasi exceeds remaining budget
+        if (formData.realisasi > remainingPaguAnggaran) {
+            setErrors({
+                ...errors,
+                bulk: `Realisasi ${formatCurrency(formData.realisasi)} melebihi sisa anggaran ${formatCurrency(remainingPaguAnggaran)}`,
             });
             return;
         }
@@ -198,6 +236,7 @@ export default function Create({
             harga_satuan: 0,
             total_harga: 0,
         });
+        setExistingRealisasiTotal(0);
     };
 
     // Update harga satuan display when form data changes
@@ -257,6 +296,18 @@ export default function Create({
             setFilteredTrxBelanja([]);
         }
     }, [formData.kode_akun, trxBelanja]);
+
+    // Reset existing realisasi when key fields change
+    useEffect(() => {
+        setExistingRealisasiTotal(0);
+    }, [
+        formData.kode_sub_kegiatan,
+        formData.kode_akun,
+        formData.kelompok_belanja,
+        formData.keterangan_belanja,
+        formData.sumber_dana,
+        formData.nama_standar_harga,
+    ]);
 
     // Get kelompok_belanja (paket) options based on selected akun
     const getKelompokBelanjaOptions = () => {
@@ -549,6 +600,50 @@ export default function Create({
         }
     };
 
+    // Function to fetch existing realisasi total for the selected spesifikasi
+    const fetchExistingRealisasi = async (spesifikasiData: any) => {
+        if (
+            !spesifikasiData.kode_sub_kegiatan ||
+            !spesifikasiData.kode_akun ||
+            !spesifikasiData.kelompok_belanja ||
+            !spesifikasiData.keterangan_belanja ||
+            !spesifikasiData.sumber_dana ||
+            !spesifikasiData.nama_standar_harga ||
+            !spesifikasiData.spesifikasi
+        ) {
+            setExistingRealisasiTotal(0);
+            return;
+        }
+
+        setIsLoadingRealisasi(true);
+        try {
+            const response = await fetch('/realisasi-belanja/total-realisasi', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN':
+                        document
+                            .querySelector('meta[name="csrf-token"]')
+                            ?.getAttribute('content') || '',
+                },
+                body: JSON.stringify(spesifikasiData),
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                setExistingRealisasiTotal(data.total_realisasi || 0);
+            } else {
+                console.error('Failed to fetch existing realisasi');
+                setExistingRealisasiTotal(0);
+            }
+        } catch (error) {
+            console.error('Error fetching existing realisasi:', error);
+            setExistingRealisasiTotal(0);
+        } finally {
+            setIsLoadingRealisasi(false);
+        }
+    };
+
     // Handle spesifikasi selection to auto-fill DPA values (koefisien, harga_satuan, total_harga)
     const handleSpesifikasiSelect = (selectedSpesifikasi: string) => {
         if (!selectedSpesifikasi) {
@@ -563,6 +658,7 @@ export default function Create({
                 harga_satuan: 0,
                 total_harga: 0,
             });
+            setExistingRealisasiTotal(0);
             return;
         }
 
@@ -594,6 +690,17 @@ export default function Create({
                 harga_satuan: selectedTrx.harga_satuan,
                 total_harga: selectedTrx.total_harga,
             });
+
+            // Fetch existing realisasi for this spesifikasi
+            fetchExistingRealisasi({
+                kode_sub_kegiatan: formData.kode_sub_kegiatan,
+                kode_akun: formData.kode_akun,
+                kelompok_belanja: formData.kelompok_belanja,
+                keterangan_belanja: formData.keterangan_belanja,
+                sumber_dana: formData.sumber_dana,
+                nama_standar_harga: formData.nama_standar_harga,
+                spesifikasi: selectedTrx.spesifikasi,
+            });
         } else {
             setFormData({
                 spesifikasi: selectedSpesifikasi,
@@ -606,6 +713,7 @@ export default function Create({
                 harga_satuan: 0,
                 total_harga: 0,
             });
+            setExistingRealisasiTotal(0);
         }
     };
 
@@ -867,6 +975,45 @@ export default function Create({
                                     readOnly
                                     className="w-full cursor-not-allowed rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-gray-700 focus:border-main focus:outline-none focus:ring-2 focus:ring-main/20"
                                 />
+                                {existingRealisasiTotal > 0 && (
+                                    <div className="mt-2 space-y-1">
+                                        <div className="text-xs text-gray-600">
+                                            <span className="font-medium">
+                                                Sudah Diinput:
+                                            </span>{' '}
+                                            <span className="text-orange-600">
+                                                {formatCurrency(
+                                                    existingRealisasiTotal,
+                                                )}
+                                            </span>
+                                        </div>
+                                        {remainingPaguAnggaran <= 0 && (
+                                            <div className="mt-1 rounded-md border border-red-200 bg-red-50 px-2 py-1">
+                                                <div className="flex items-center text-xs text-red-700">
+                                                    <svg
+                                                        className="mr-1 h-3 w-3"
+                                                        fill="currentColor"
+                                                        viewBox="0 0 20 20"
+                                                    >
+                                                        <path
+                                                            fillRule="evenodd"
+                                                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                                                            clipRule="evenodd"
+                                                        />
+                                                    </svg>
+                                                    Anggaran sudah habis
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                {isLoadingRealisasi && (
+                                    <div className="mt-2 text-xs text-gray-500">
+                                        <span className="animate-pulse">
+                                            Mengecek realisasi yang sudah ada...
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -973,7 +1120,15 @@ export default function Create({
                             <div>
                                 <label className="mb-2 block text-sm font-medium text-gray-700">
                                     Realisasi
-                                    {dpaValues.total_harga > 0 && (
+                                    {remainingPaguAnggaran > 0 ? (
+                                        <span className="ml-1 text-xs text-green-600">
+                                            (Maksimal:{' '}
+                                            {formatCurrency(
+                                                remainingPaguAnggaran,
+                                            )}
+                                            )
+                                        </span>
+                                    ) : dpaValues.total_harga > 0 ? (
                                         <span className="ml-1 text-xs text-gray-500">
                                             (Maksimal:{' '}
                                             {formatCurrency(
@@ -981,7 +1136,7 @@ export default function Create({
                                             )}
                                             )
                                         </span>
-                                    )}
+                                    ) : null}
                                 </label>
                                 <input
                                     type="text"

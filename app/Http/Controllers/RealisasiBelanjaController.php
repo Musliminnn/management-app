@@ -160,4 +160,32 @@ class RealisasiBelanjaController extends Controller
         $trxBelanja = TrxBelanja::where('kode_akun', $kodeAkun)->get();
         return response()->json($trxBelanja);
     }
+
+    /**
+     * Get total realisasi for specific spesifikasi
+     */
+    public function getTotalRealisasiBySpesifikasi(Request $request)
+    {
+        $request->validate([
+            'kode_sub_kegiatan' => 'required',
+            'kode_akun' => 'required',
+            'kelompok_belanja' => 'required',
+            'keterangan_belanja' => 'required',
+            'sumber_dana' => 'required',
+            'nama_standar_harga' => 'required',
+            'spesifikasi' => 'required',
+        ]);
+
+        $totalRealisasi = RealisasiBelanja::where([
+            'kode_sub_kegiatan' => $request->kode_sub_kegiatan,
+            'kode_akun' => $request->kode_akun,
+            'kelompok_belanja' => $request->kelompok_belanja,
+            'keterangan_belanja' => $request->keterangan_belanja,
+            'sumber_dana' => $request->sumber_dana,
+            'nama_standar_harga' => $request->nama_standar_harga,
+            'spesifikasi' => $request->spesifikasi,
+        ])->sum('realisasi');
+
+        return response()->json(['total_realisasi' => $totalRealisasi]);
+    }
 }
