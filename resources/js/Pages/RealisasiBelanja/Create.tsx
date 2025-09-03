@@ -16,7 +16,7 @@ import {
     validateRealisasiPagu,
 } from '@/utils/currencyUtils';
 import { Head, router } from '@inertiajs/react';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 interface DropdownOption {
     kode: string;
@@ -360,8 +360,8 @@ export default function Create({
         return Array.from(uniqueMap.values()).filter(Boolean);
     };
 
-    // Get spesifikasi options based on selected nama_standar_harga
-    const getSpesifikasiOptions = () => {
+    // Get spesifikasi options based on selected nama_standar_harga (memoized)
+    const getSpesifikasiOptions = useMemo(() => {
         if (
             !formData.kode_akun ||
             !formData.kelompok_belanja ||
@@ -392,8 +392,48 @@ export default function Create({
             }
         });
 
-        return Array.from(uniqueMap.values()).filter(Boolean);
-    };
+        // Get all available spesifikasi
+        const allSpesifikasi = Array.from(uniqueMap.values()).filter(Boolean);
+
+        // Get spesifikasi that are already used in bulkInputItems
+        const usedSpesifikasi = bulkInputItems.map((item) =>
+            item.spesifikasi.toLowerCase(),
+        );
+
+        // Filter out already used spesifikasi
+        return allSpesifikasi.filter(
+            (spesifikasi) =>
+                !usedSpesifikasi.includes(spesifikasi.toLowerCase()),
+        );
+    }, [
+        formData.kode_akun,
+        formData.kelompok_belanja,
+        formData.keterangan_belanja,
+        formData.sumber_dana,
+        formData.nama_standar_harga,
+        trxBelanja,
+        bulkInputItems,
+    ]);
+
+    // Auto-clear spesifikasi if current selected spesifikasi is no longer available
+    useEffect(() => {
+        if (
+            formData.spesifikasi &&
+            !getSpesifikasiOptions.includes(formData.spesifikasi)
+        ) {
+            setFormData({
+                spesifikasi: '',
+                koefisien_realisasi: 0,
+                harga_satuan_realisasi: 0,
+                realisasi: 0,
+            });
+            setDpaValues({
+                koefisien: '',
+                harga_satuan: 0,
+                total_harga: 0,
+            });
+        }
+    }, [getSpesifikasiOptions, formData.spesifikasi]);
 
     // Clear kode_akun when kode_sub_kegiatan changes
     useEffect(() => {
@@ -767,7 +807,7 @@ export default function Create({
                         {/* Spesifikasi */}
                         <div>
                             <SimpleDropdown
-                                options={getSpesifikasiOptions()}
+                                options={getSpesifikasiOptions}
                                 value={formData.spesifikasi}
                                 onChange={(value) =>
                                     handleSpesifikasiSelect(value)
