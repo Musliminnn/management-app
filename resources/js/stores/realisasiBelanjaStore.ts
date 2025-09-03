@@ -22,6 +22,14 @@ export interface RealisasiBelanjaFormData {
 
 export interface BulkInputItem {
     id: string;
+    // Store all form data needed for submission
+    tanggal: string;
+    kode_kegiatan: string;
+    kode_sub_kegiatan: string;
+    kode_akun: string;
+    kelompok_belanja: string;
+    keterangan_belanja: string;
+    sumber_dana: string;
     nama_standar_harga: string;
     spesifikasi: string;
     koefisien_dpa: string;
@@ -113,7 +121,6 @@ interface RealisasiBelanjaState {
     
     // Computed
     getTotalHarga: () => number;
-    isFormValid: () => boolean;
 }
 
 const initialFormData: RealisasiBelanjaFormData = {
@@ -214,27 +221,6 @@ export const useRealisasiBelanjaStore = create<RealisasiBelanjaState>()(
             getTotalHarga: () => {
                 const { formData } = get();
                 return formData.koefisien_realisasi * formData.harga_satuan_realisasi;
-            },
-
-            isFormValid: () => {
-                const { formData } = get();
-                const requiredFields: (keyof RealisasiBelanjaFormData)[] = [
-                    'tanggal',
-                    'kode_kegiatan',
-                    'kode_sub_kegiatan',
-                    'kode_akun',
-                    'kelompok_belanja',
-                    'keterangan_belanja',
-                    'sumber_dana',
-                    'nama_standar_harga',
-                    'spesifikasi',
-                    'tujuan_pembayaran',
-                ];
-                
-                return requiredFields.every(field => {
-                    const value = formData[field];
-                    return value !== '' && value !== null && value !== undefined;
-                }) && formData.koefisien_realisasi > 0 && formData.harga_satuan_realisasi > 0 && formData.realisasi > 0;
             },
         }),
         {

@@ -22,6 +22,7 @@ class StoreRealisasiBelanjaRequest extends FormRequest
     public function rules(): array
     {
         return [
+            // Base data rules
             'tanggal' => 'required|date',
             'kode_kegiatan' => 'required|exists:ref_kegiatan,kode',
             'kode_sub_kegiatan' => 'required|exists:ref_sub_kegiatan,kode',
@@ -29,12 +30,15 @@ class StoreRealisasiBelanjaRequest extends FormRequest
             'kelompok_belanja' => 'required|string|max:255',
             'keterangan_belanja' => 'required|string|max:255',
             'sumber_dana' => 'required|string|max:255',
-            'nama_standar_harga' => 'required|string|max:255',
-            'spesifikasi' => 'required|string',
-            'koefisien' => 'required|numeric|min:0', // Koefisien realisasi
-            'harga_satuan' => 'required|numeric|min:0', // Harga satuan realisasi
-            'realisasi' => 'required|numeric|min:0',
             'tujuan_pembayaran' => 'required|string',
+
+            // Bulk items rules
+            'bulk_items' => 'required|array|min:1',
+            'bulk_items.*.nama_standar_harga' => 'required|string|max:255',
+            'bulk_items.*.spesifikasi' => 'required|string',
+            'bulk_items.*.koefisien' => 'required|numeric|min:0',
+            'bulk_items.*.harga_satuan' => 'required|numeric|min:0',
+            'bulk_items.*.realisasi' => 'required|numeric|min:0',
         ];
     }
 
@@ -46,6 +50,7 @@ class StoreRealisasiBelanjaRequest extends FormRequest
     public function messages(): array
     {
         return [
+            // Base field messages
             'tanggal.required' => 'Tanggal harus diisi.',
             'tanggal.date' => 'Format tanggal tidak valid.',
             'kode_kegiatan.required' => 'Kegiatan harus dipilih.',
@@ -57,18 +62,23 @@ class StoreRealisasiBelanjaRequest extends FormRequest
             'kelompok_belanja.required' => 'Kelompok belanja harus diisi.',
             'keterangan_belanja.required' => 'Keterangan belanja harus diisi.',
             'sumber_dana.required' => 'Sumber dana harus diisi.',
-            'nama_standar_harga.required' => 'Nama standar harga harus diisi.',
-            'spesifikasi.required' => 'Spesifikasi harus diisi.',
-            'koefisien.required' => 'Koefisien realisasi harus diisi.',
-            'koefisien.numeric' => 'Koefisien realisasi harus berupa angka.',
-            'koefisien.min' => 'Koefisien realisasi tidak boleh negatif.',
-            'harga_satuan.required' => 'Harga satuan realisasi harus diisi.',
-            'harga_satuan.numeric' => 'Harga satuan realisasi harus berupa angka.',
-            'harga_satuan.min' => 'Harga satuan realisasi tidak boleh negatif.',
-            'realisasi.required' => 'Realisasi harus diisi.',
-            'realisasi.numeric' => 'Realisasi harus berupa angka.',
-            'realisasi.min' => 'Realisasi tidak boleh negatif.',
             'tujuan_pembayaran.required' => 'Tujuan pembayaran harus diisi.',
+
+            // Bulk submission messages
+            'bulk_items.required' => 'Data realisasi tidak boleh kosong.',
+            'bulk_items.array' => 'Format data realisasi tidak valid.',
+            'bulk_items.min' => 'Minimal harus ada satu data realisasi.',
+            'bulk_items.*.nama_standar_harga.required' => 'Nama standar harga harus diisi pada semua item.',
+            'bulk_items.*.spesifikasi.required' => 'Spesifikasi harus diisi pada semua item.',
+            'bulk_items.*.koefisien.required' => 'Koefisien realisasi harus diisi pada semua item.',
+            'bulk_items.*.koefisien.numeric' => 'Koefisien realisasi harus berupa angka pada semua item.',
+            'bulk_items.*.koefisien.min' => 'Koefisien realisasi tidak boleh negatif pada semua item.',
+            'bulk_items.*.harga_satuan.required' => 'Harga satuan realisasi harus diisi pada semua item.',
+            'bulk_items.*.harga_satuan.numeric' => 'Harga satuan realisasi harus berupa angka pada semua item.',
+            'bulk_items.*.harga_satuan.min' => 'Harga satuan realisasi tidak boleh negatif pada semua item.',
+            'bulk_items.*.realisasi.required' => 'Realisasi harus diisi pada semua item.',
+            'bulk_items.*.realisasi.numeric' => 'Realisasi harus berupa angka pada semua item.',
+            'bulk_items.*.realisasi.min' => 'Realisasi tidak boleh negatif pada semua item.',
         ];
     }
 }

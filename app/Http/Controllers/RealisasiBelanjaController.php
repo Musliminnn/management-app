@@ -12,6 +12,7 @@ use App\Http\Requests\UpdateRealisasiBelanjaRequest;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class RealisasiBelanjaController extends Controller
 {
@@ -53,12 +54,35 @@ class RealisasiBelanjaController extends Controller
     public function store(StoreRealisasiBelanjaRequest $request)
     {
         $validatedData = $request->validated();
-        $validatedData['user_id'] = Auth::id();
 
-        RealisasiBelanja::create($validatedData);
+        // Handle bulk submission only
+        $bulkItems = $request->input('bulk_items');
+        $baseData = collect($validatedData)->except(['bulk_items'])->toArray();
+
+        $createdItems = [];
+
+        DB::transaction(function () use ($bulkItems, $baseData, &$createdItems) {
+            foreach ($bulkItems as $item) {
+                $itemData = array_merge($baseData, [
+                    'nama_standar_harga' => $item['nama_standar_harga'],
+                    'spesifikasi' => $item['spesifikasi'],
+                    'koefisien' => $item['koefisien'],
+                    'harga_satuan' => $item['harga_satuan'],
+                    'realisasi' => $item['realisasi'],
+                    'user_id' => Auth::id(),
+                ]);
+
+                $createdItems[] = RealisasiBelanja::create($itemData);
+            }
+        });
+
+        $itemCount = count($createdItems);
+        $message = $itemCount === 1
+            ? 'Data realisasi belanja berhasil ditambahkan.'
+            : "{$itemCount} data realisasi belanja berhasil ditambahkan.";
 
         return redirect()->route('realisasi-belanja.index')
-            ->with('success', 'Data realisasi belanja berhasil ditambahkan.');
+            ->with('success', $message);
     }
 
     /**

@@ -61,7 +61,6 @@ export default function Create({
         errors,
         setErrors,
         clearErrors,
-        isFormValid,
         resetForm,
         bulkInputItems,
         addBulkInputItem,
@@ -128,7 +127,15 @@ export default function Create({
 
     // Function to add current form data to bulk input
     const addToBulkInput = () => {
+        // Validate all required fields for adding to preview (except tujuan_pembayaran)
         if (
+            !formData.tanggal ||
+            !formData.kode_kegiatan ||
+            !formData.kode_sub_kegiatan ||
+            !formData.kode_akun ||
+            !formData.kelompok_belanja ||
+            !formData.keterangan_belanja ||
+            !formData.sumber_dana ||
             !formData.nama_standar_harga ||
             !formData.spesifikasi ||
             !dpaValues.koefisien ||
@@ -145,6 +152,14 @@ export default function Create({
 
         const newItem: BulkInputItem = {
             id: `${Date.now()}-${Math.random()}`,
+            // Store all necessary form data in each item
+            tanggal: formData.tanggal,
+            kode_kegiatan: formData.kode_kegiatan,
+            kode_sub_kegiatan: formData.kode_sub_kegiatan,
+            kode_akun: formData.kode_akun,
+            kelompok_belanja: formData.kelompok_belanja,
+            keterangan_belanja: formData.keterangan_belanja,
+            sumber_dana: formData.sumber_dana,
             nama_standar_harga: formData.nama_standar_harga,
             spesifikasi: formData.spesifikasi,
             koefisien_dpa: dpaValues.koefisien,
@@ -162,7 +177,14 @@ export default function Create({
         delete newErrors.bulk;
         setErrors(newErrors);
 
-        // Reset specific fields for next entry
+        const clearedErrors = { ...errors };
+        delete clearedErrors.nama_standar_harga;
+        delete clearedErrors.spesifikasi;
+        delete clearedErrors.koefisien;
+        delete clearedErrors.harga_satuan;
+        delete clearedErrors.realisasi;
+        setErrors(clearedErrors);
+
         setFormData({
             nama_standar_harga: '',
             spesifikasi: '',
@@ -426,98 +448,51 @@ export default function Create({
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        // Check if we have bulk input items or regular form submission
-        if (bulkInputItems.length > 0) {
-            // For bulk submission, we need at least tujuan_pembayaran and basic form data
-            if (
-                !formData.tanggal ||
-                !formData.kode_kegiatan ||
-                !formData.kode_sub_kegiatan ||
-                !formData.kode_akun ||
-                !formData.tujuan_pembayaran
-            ) {
-                setErrors({
-                    form: 'Mohon lengkapi semua field dasar dan tujuan pembayaran untuk bulk input',
-                });
-                return;
-            }
-        } else {
-            // Regular form validation
-            if (!isFormValid()) {
-                setErrors({
-                    form: 'Mohon lengkapi semua field yang diperlukan',
-                });
-                return;
-            }
+        // Clear all errors at the start
+        setErrors({});
 
-            // Additional validation for koefisien realisasi
-            const koefisienValidation = validateKoefisienRealisasi(
-                formData.koefisien_realisasi,
-                dpaValues.koefisien,
-            );
+        // Validation for bulk submission
+        if (bulkInputItems.length === 0) {
+            setErrors({
+                form: 'Mohon tambahkan minimal satu data ke Preview Realisasi sebelum menyimpan',
+            });
+            return;
+        }
 
-            // Additional validation for realisasi against pagu anggaran
-            const realisasiValidation = validateRealisasiPagu(
-                formData.realisasi,
-                dpaValues.total_harga,
-            );
-
-            if (!koefisienValidation.isValid || !realisasiValidation.isValid) {
-                const formErrors: Record<string, string> = {
-                    form: 'Terdapat kesalahan dalam form',
-                };
-
-                if (!koefisienValidation.isValid) {
-                    formErrors.koefisien = koefisienValidation.errorMessage!;
-                }
-
-                if (!realisasiValidation.isValid) {
-                    formErrors.realisasi = realisasiValidation.errorMessage!;
-                }
-
-                setErrors(formErrors);
-                return;
-            }
+        if (!formData.tujuan_pembayaran?.trim()) {
+            setErrors({
+                form: 'Mohon isi Tujuan Pembayaran sebelum menyimpan',
+            });
+            return;
         }
 
         setSubmitting(true);
-        clearErrors();
 
         try {
-            // Prepare data for submission
-            let submitData;
+            // Prepare bulk submission data
+            const firstItem = bulkInputItems[0];
+            const submitData = {
+                // Base data (shared across all items)
+                tanggal: firstItem.tanggal,
+                kode_kegiatan: firstItem.kode_kegiatan,
+                kode_sub_kegiatan: firstItem.kode_sub_kegiatan,
+                kode_akun: firstItem.kode_akun,
+                kelompok_belanja: firstItem.kelompok_belanja,
+                keterangan_belanja: firstItem.keterangan_belanja,
+                sumber_dana: firstItem.sumber_dana,
+                tujuan_pembayaran: formData.tujuan_pembayaran.trim(),
 
-            if (bulkInputItems.length > 0) {
-                // For bulk submission, create multiple records
-                submitData = {
-                    bulk_items: bulkInputItems.map((item) => ({
-                        tanggal: formData.tanggal,
-                        kode_kegiatan: formData.kode_kegiatan,
-                        kode_sub_kegiatan: formData.kode_sub_kegiatan,
-                        kode_akun: formData.kode_akun,
-                        kelompok_belanja: formData.kelompok_belanja,
-                        keterangan_belanja: formData.keterangan_belanja,
-                        sumber_dana: formData.sumber_dana,
-                        nama_standar_harga: item.nama_standar_harga,
-                        spesifikasi: item.spesifikasi,
-                        koefisien: item.koefisien_realisasi,
-                        harga_satuan: item.harga_satuan_realisasi,
-                        realisasi: item.realisasi,
-                        tujuan_pembayaran: formData.tujuan_pembayaran,
-                    })),
-                    is_bulk: true,
-                };
-            } else {
-                // Regular single submission
-                submitData = {
-                    ...formData,
-                    koefisien: formData.koefisien_realisasi, // Save realisasi value as koefisien
-                    harga_satuan: formData.harga_satuan_realisasi, // Save realisasi value as harga_satuan
-                    is_bulk: false,
-                };
-            }
+                // Items data (variable per item)
+                bulk_items: bulkInputItems.map((item) => ({
+                    nama_standar_harga: item.nama_standar_harga,
+                    spesifikasi: item.spesifikasi,
+                    koefisien: item.koefisien_realisasi,
+                    harga_satuan: item.harga_satuan_realisasi,
+                    realisasi: item.realisasi,
+                })),
+            };
 
-            router.post('/realisasi-belanja', submitData as any, {
+            router.post('/realisasi-belanja', submitData, {
                 onSuccess: () => {
                     router.visit('/realisasi-belanja');
                 },
@@ -609,7 +584,11 @@ export default function Create({
                         </p>
                     </div>
 
-                    <form onSubmit={handleSubmit} className="space-y-6 p-6">
+                    <form
+                        onSubmit={handleSubmit}
+                        className="space-y-6 p-6"
+                        noValidate
+                    >
                         {errors.form && (
                             <div className="flex items-center rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-700">
                                 <svg
@@ -640,7 +619,6 @@ export default function Create({
                                     } // Periode hari ini
                                     label="Tanggal"
                                     placeholder="Pilih tanggal realisasi"
-                                    required
                                     error={errors.tanggal}
                                 />
                             </div>
@@ -658,7 +636,6 @@ export default function Create({
                                     }}
                                     label="Kegiatan"
                                     placeholder="Pilih Kegiatan"
-                                    required
                                     error={errors.kode_kegiatan}
                                 />
                             </div>
@@ -675,7 +652,6 @@ export default function Create({
                                     }
                                     label="Sub Kegiatan"
                                     placeholder="Pilih Sub Kegiatan"
-                                    required
                                     disabled={!formData.kode_kegiatan}
                                     error={errors.kode_sub_kegiatan}
                                 />
@@ -693,7 +669,6 @@ export default function Create({
                                     }
                                     label="Akun"
                                     placeholder="Pilih Akun"
-                                    required
                                     disabled={!formData.kode_sub_kegiatan}
                                     error={errors.kode_akun}
                                 />
@@ -711,7 +686,6 @@ export default function Create({
                                     }
                                     label="Kelompok Belanja"
                                     placeholder="Pilih Kelompok Belanja"
-                                    required
                                     disabled={!formData.kode_akun}
                                     error={errors.kelompok_belanja}
                                 />
@@ -729,7 +703,6 @@ export default function Create({
                                     }
                                     label="Keterangan Belanja"
                                     placeholder="Pilih Keterangan Belanja"
-                                    required
                                     disabled={
                                         !formData.kode_akun ||
                                         !formData.kelompok_belanja
@@ -750,7 +723,6 @@ export default function Create({
                                     }
                                     label="Sumber Dana"
                                     placeholder="Pilih Sumber Dana"
-                                    required
                                     disabled={
                                         !formData.kode_akun ||
                                         !formData.kelompok_belanja ||
@@ -781,7 +753,6 @@ export default function Create({
                                     }}
                                     label="Nama Standar Harga"
                                     placeholder="Pilih Standar Harga"
-                                    required
                                     disabled={
                                         !formData.kode_akun ||
                                         !formData.kelompok_belanja ||
@@ -803,7 +774,6 @@ export default function Create({
                                 }
                                 label="Spesifikasi"
                                 placeholder="Pilih Spesifikasi"
-                                required
                                 disabled={
                                     !formData.kode_akun ||
                                     !formData.kelompok_belanja ||
@@ -915,7 +885,6 @@ export default function Create({
                                             : 'border-gray-300'
                                     }`}
                                     placeholder="Masukkan koefisien..."
-                                    required
                                 />
                             </div>
 
@@ -941,7 +910,6 @@ export default function Create({
                                     }}
                                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out hover:border-main focus:border-main focus:outline-none focus:ring-2 focus:ring-main"
                                     placeholder="Masukkan harga satuan..."
-                                    required
                                 />
                                 {errors.harga_satuan && (
                                     <p className="mt-1 flex items-center text-sm text-red-600">
@@ -1033,6 +1001,13 @@ export default function Create({
                                     variant="primary"
                                     onClick={addToBulkInput}
                                     disabled={
+                                        !formData.tanggal ||
+                                        !formData.kode_kegiatan ||
+                                        !formData.kode_sub_kegiatan ||
+                                        !formData.kode_akun ||
+                                        !formData.kelompok_belanja ||
+                                        !formData.keterangan_belanja ||
+                                        !formData.sumber_dana ||
                                         !formData.nama_standar_harga ||
                                         !formData.spesifikasi ||
                                         !dpaValues.koefisien ||
@@ -1272,7 +1247,6 @@ export default function Create({
                                 rows={3}
                                 className="resize-vertical w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-500 transition-all duration-200 ease-in-out hover:border-main/50 focus:border-main focus:outline-none focus:ring-2 focus:ring-main/20"
                                 placeholder="Masukkan tujuan pembayaran..."
-                                required
                             />
                             {errors.tujuan_pembayaran && (
                                 <p className="mt-1 flex items-center text-sm text-red-600">
@@ -1310,8 +1284,8 @@ export default function Create({
                                 variant="primary"
                                 disabled={
                                     isSubmitting ||
-                                    (!isFormValid() &&
-                                        bulkInputItems.length === 0)
+                                    bulkInputItems.length === 0 ||
+                                    !formData.tujuan_pembayaran
                                 }
                                 className="min-w-[120px] px-6 py-2.5"
                             >
