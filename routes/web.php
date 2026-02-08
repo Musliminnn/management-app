@@ -5,6 +5,7 @@ use App\Http\Controllers\ImportController;
 use App\Http\Controllers\InputDPAController;
 use App\Http\Controllers\RealisasiBelanjaController;
 use App\Http\Controllers\LaporanRealisasiBelanjaController;
+use App\Http\Controllers\DashboardController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -39,9 +40,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('realisasi-belanja.total-realisasi');
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])->name('dashboard');
 
 // Laporan Realisasi Belanja Routes
 Route::middleware(['auth', 'verified'])->group(function () {
