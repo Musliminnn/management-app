@@ -1,0 +1,21 @@
+﻿Role;Menu/Fitur;View;Add;Edit;Delete;Validasi;Export;Keterangan
+BP / ADMIN ;Dashboard;v;v;v;v;v;v;
+;Input DPA;v;v;v;v;v;v;BP Dapat melakukan perubahan anggaran
+;Input Realisasi Belanja;;;;;;;
+;Riwayat Transaksi ;v;v;v;v;v;v;
+;Laporan Realisasi;v;v;v;v;v;v;
+PA / KPA ;Dashboard;v;;;;;v;
+;Input DPA;;;;;;;
+;Input Realisasi Belanja;;;;;;;
+;Riwayat Transaksi ;v;;;;;v;
+;Laporan Realisasi;v;;;;;v;
+PPTK ;Dashboard;v;;;;;v;
+;Input DPA;;;;;;v;
+;Input Realisasi Belanja;v;v;v;v;;v;
+;Riwayat Transaksi ;v;;;;;v;
+;Laporan Realisasi;v;;;;;v;
+BPP;Dashboard;v;;;;;v;
+;Input DPA;;;;;;v;
+;Input Realisasi Belanja;v;;;;v;v;
+;Riwayat Transaksi ;v;v;v;v;v;v;
+;Laporan Realisasi;v;;;;v;v;

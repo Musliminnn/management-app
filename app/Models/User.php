@@ -3,10 +3,12 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\MenuEnum;
+use App\Enums\PermissionEnum;
+use App\Enums\RoleEnum;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use App\Enums\RoleEnum;
 
 class User extends Authenticatable
 {
@@ -78,5 +80,64 @@ class User extends Authenticatable
     public function isPaKpa(): bool
     {
         return $this->hasRole(RoleEnum::PAKPA);
+    }
+
+    public function isPptk(): bool
+    {
+        return $this->hasRole(RoleEnum::PPTK);
+    }
+
+    public function hasPermission(MenuEnum|string $menu, PermissionEnum|string $permission): bool
+    {
+        if (! $this->role) {
+            return false;
+        }
+
+        return $this->role->hasPermission($menu, $permission);
+    }
+
+    public function canView(MenuEnum|string $menu): bool
+    {
+        return $this->hasPermission($menu, PermissionEnum::View);
+    }
+
+    public function canAdd(MenuEnum|string $menu): bool
+    {
+        return $this->hasPermission($menu, PermissionEnum::Add);
+    }
+
+    public function canEdit(MenuEnum|string $menu): bool
+    {
+        return $this->hasPermission($menu, PermissionEnum::Edit);
+    }
+
+    public function canDelete(MenuEnum|string $menu): bool
+    {
+        return $this->hasPermission($menu, PermissionEnum::Delete);
+    }
+
+    public function canValidate(MenuEnum|string $menu): bool
+    {
+        return $this->hasPermission($menu, PermissionEnum::Validate);
+    }
+
+    public function canExport(MenuEnum|string $menu): bool
+    {
+        return $this->hasPermission($menu, PermissionEnum::Export);
+    }
+
+    public function getMenuPermissions(MenuEnum|string $menu): array
+    {
+        if (! $this->role) {
+            return [];
+        }
+
+        $menuName = $menu instanceof MenuEnum ? $menu->value : $menu;
+
+        return $this->role->menuPermissions()
+            ->whereHas('menu', fn($q) => $q->where('name', $menuName))
+            ->pluck('permission')
+            ->map(fn($p) => $p instanceof PermissionEnum ? $p->value : $p)
+            ->toArray();
     }
 }

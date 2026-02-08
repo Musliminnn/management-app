@@ -17,12 +17,7 @@ class RoleSeeder extends Seeder
         foreach (RoleEnum::cases() as $enum) {
             Role::firstOrCreate(
                 ['name' => $enum->value],
-                ['label' => match ($enum) {
-                    RoleEnum::Superadmin => 'Super Admin',
-                    RoleEnum::Admin => 'BP / Admin',
-                    RoleEnum::BPP => 'BPP Dinas/UPTD/UOBK',
-                    RoleEnum::PAKPA => 'PA / KPA',
-                }]
+                ['label' => $enum->label()]
             );
         }
     }
