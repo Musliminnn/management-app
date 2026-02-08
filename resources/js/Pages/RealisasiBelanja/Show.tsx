@@ -21,7 +21,7 @@ interface RealisasiBelanjaData {
     created_at: string;
     updated_at: string;
     kegiatan?: { kode: string; nama: string };
-    subKegiatan?: { kode: string; nama: string };
+    sub_kegiatan?: { kode: string; nama: string };
     akun?: { kode: string; nama: string };
     user?: { id: number; name: string };
 }
@@ -94,8 +94,8 @@ export default function Show({ realisasiBelanja }: Props) {
                                         Sub Kegiatan
                                     </label>
                                     <p className="mt-1 text-sm text-gray-900">
-                                        {realisasiBelanja.subKegiatan
-                                            ? `${realisasiBelanja.subKegiatan.kode} - ${realisasiBelanja.subKegiatan.nama}`
+                                        {realisasiBelanja.sub_kegiatan
+                                            ? `${realisasiBelanja.sub_kegiatan.kode} - ${realisasiBelanja.sub_kegiatan.nama}`
                                             : realisasiBelanja.kode_sub_kegiatan}
                                     </p>
                                 </div>

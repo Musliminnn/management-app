@@ -22,7 +22,7 @@ interface RealisasiBelanjaData {
     created_at: string;
     updated_at: string;
     kegiatan?: { kode: string; nama: string };
-    subKegiatan?: { kode: string; nama: string };
+    sub_kegiatan?: { kode: string; nama: string };
     akun?: { kode: string; nama: string };
     user?: { id: number; name: string };
 }
@@ -175,10 +175,10 @@ export default function Index({ realisasiBelanja }: Props) {
                                                 <div
                                                     className="max-w-xs truncate"
                                                     title={
-                                                        item.subKegiatan?.nama
+                                                        item.sub_kegiatan?.nama
                                                     }
                                                 >
-                                                    {item.subKegiatan?.nama ||
+                                                    {item.sub_kegiatan?.nama ||
                                                         '-'}
                                                 </div>
                                             </td>
