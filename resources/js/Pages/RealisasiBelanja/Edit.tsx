@@ -73,8 +73,18 @@ export default function Edit({
         errors,
         setErrors,
         clearErrors,
-        isFormValid,
     } = useRealisasiBelanjaStore();
+
+    // Simple form validation
+    const isFormValid = () => {
+        return (
+            formData.tanggal &&
+            formData.kode_kegiatan &&
+            formData.kode_sub_kegiatan &&
+            formData.kode_akun &&
+            formData.realisasi > 0
+        );
+    };
 
     const [filteredSubKegiatan, setFilteredSubKegiatan] = useState<
         DropdownOption[]

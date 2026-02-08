@@ -4,6 +4,7 @@ use App\Http\Controllers\RootRedirectController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\InputDPAController;
 use App\Http\Controllers\RealisasiBelanjaController;
+use App\Http\Controllers\LaporanRealisasiBelanjaController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -41,5 +42,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
+
+// Laporan Realisasi Belanja Routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/laporan-realisasi-belanja', [LaporanRealisasiBelanjaController::class, 'index'])
+        ->name('laporan-realisasi-belanja.index');
+    Route::post('/laporan-realisasi-belanja/cascading-filter', [LaporanRealisasiBelanjaController::class, 'cascadingFilter'])
+        ->name('laporan-realisasi-belanja.cascading-filter');
+    Route::post('/laporan-realisasi-belanja/reset', [LaporanRealisasiBelanjaController::class, 'reset'])
+        ->name('laporan-realisasi-belanja.reset');
+    Route::get('/laporan-realisasi-belanja/export-pdf', [LaporanRealisasiBelanjaController::class, 'exportPdf'])
+        ->name('laporan-realisasi-belanja.export-pdf');
+});
 
 require __DIR__ . '/auth.php';

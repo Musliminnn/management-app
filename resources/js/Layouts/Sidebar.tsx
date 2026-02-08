@@ -6,6 +6,7 @@ export const Sidebar = () => {
         { label: 'Dashboard', path: '/dashboard' },
         { label: 'Input DPA', path: '/input-dpa' },
         { label: 'Input Realisasi Belanja', path: '/realisasi-belanja' },
+        { label: 'Laporan Realisasi Belanja', path: '/laporan-realisasi-belanja' },
     ];
 
     return (
