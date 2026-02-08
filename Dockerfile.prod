@@ -1,0 +1,89 @@
+FROM php:8.2-fpm
+
+# Set working directory
+WORKDIR /var/www
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libonig-dev \
+    libxml2-dev \
+    libzip-dev \
+    libfreetype6-dev \
+    libjpeg62-turbo-dev \
+    libicu-dev \
+    zip \
+    unzip \
+    supervisor
+
+# Clear cache
+RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Configure GD extension
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+
+# Install PHP extensions
+RUN docker-php-ext-install \
+    pdo_mysql \
+    mbstring \
+    exif \
+    pcntl \
+    bcmath \
+    gd \
+    zip \
+    intl \
+    opcache
+
+# Install Redis extension
+RUN pecl install redis && docker-php-ext-enable redis
+
+# Configure PHP for production
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+
+# Configure OPcache for production
+RUN echo "opcache.enable=1" >> /usr/local/etc/php/conf.d/opcache.ini && \
+    echo "opcache.memory_consumption=256" >> /usr/local/etc/php/conf.d/opcache.ini && \
+    echo "opcache.interned_strings_buffer=16" >> /usr/local/etc/php/conf.d/opcache.ini && \
+    echo "opcache.max_accelerated_files=20000" >> /usr/local/etc/php/conf.d/opcache.ini && \
+    echo "opcache.validate_timestamps=0" >> /usr/local/etc/php/conf.d/opcache.ini && \
+    echo "opcache.save_comments=1" >> /usr/local/etc/php/conf.d/opcache.ini
+
+# Get latest Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
+
+# Install Node.js 20
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs
+
+# Create system user
+RUN useradd -G www-data,root -u 1000 -d /home/laravel laravel && \
+    mkdir -p /home/laravel/.composer && \
+    chown -R laravel:laravel /home/laravel
+
+# Copy application code
+COPY --chown=laravel:laravel . /var/www
+
+# Switch to laravel user
+USER laravel
+
+# Install composer dependencies (production)
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+
+# Install npm dependencies and build
+RUN npm ci && npm run build && rm -rf node_modules
+
+# Switch back to root for permissions
+USER root
+
+# Set permissions
+RUN chown -R laravel:laravel /var/www && \
+    chmod -R 755 /var/www/storage && \
+    chmod -R 755 /var/www/bootstrap/cache
+
+# Switch to laravel user
+USER laravel
+
+EXPOSE 9000
+CMD ["php-fpm"]
