@@ -24,6 +24,8 @@ Route::post('/input-dpa/reset', [InputDPAController::class, 'reset'])
     ->middleware(['auth', 'verified'])->name('inputdpa.reset');
 Route::get('/input-dpa/export', [InputDPAController::class, 'export'])
     ->middleware(['auth', 'verified'])->name('inputdpa.export');
+Route::put('/input-dpa/{id}', [InputDPAController::class, 'update'])
+    ->middleware(['auth', 'verified'])->name('inputdpa.update');
 
 // Realisasi Belanja Routes
 Route::middleware(['auth', 'verified'])->group(function () {

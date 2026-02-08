@@ -72,6 +72,7 @@ class InputDPAController extends Controller
 
         $rows = collect($data->items())->map(function ($item) {
             return [
+                'id'                  => $item->id,
                 'kode_urusan'         => $item->subKegiatan->kegiatan->program->bidang->urusan->kode ?? null,
                 'nama_urusan'         => $item->subKegiatan->kegiatan->program->bidang->urusan->nama ?? null,
                 'kode_bidang_urusan'  => $item->subKegiatan->kegiatan->program->bidang->kode ?? null,
@@ -305,6 +306,44 @@ class InputDPAController extends Controller
     {
         session()->forget(['filters', 'cascading_filters']);
         return redirect()->route('inputdpa');
+    }
+
+    public function update(Request $request, $id)
+    {
+        $trxBelanja = TrxBelanja::findOrFail($id);
+
+        $validated = $request->validate([
+            'kode_standar_harga' => 'nullable|string|max:255',
+            'nama_standar_harga' => 'nullable|string|max:255',
+            'paket' => 'nullable|string|max:255',
+            'keterangan_belanja' => 'nullable|string',
+            'sumber_dana' => 'nullable|string|max:255',
+            'nama_penerima' => 'nullable|string|max:255',
+            'spesifikasi' => 'nullable|string',
+            'koefisien' => 'nullable|string|max:255',
+            'harga_satuan' => 'nullable|numeric',
+            'total_harga' => 'nullable|numeric',
+            'unit_kerja' => 'nullable|string|max:255',
+        ]);
+
+        // Map field names from frontend to database columns
+        $updateData = [
+            'kode' => $validated['kode_standar_harga'] ?? $trxBelanja->kode,
+            'nama' => $validated['nama_standar_harga'] ?? $trxBelanja->nama,
+            'paket' => $validated['paket'] ?? $trxBelanja->paket,
+            'keterangan_belanja' => $validated['keterangan_belanja'] ?? $trxBelanja->keterangan_belanja,
+            'sumber_dana' => $validated['sumber_dana'] ?? $trxBelanja->sumber_dana,
+            'nama_penerima' => $validated['nama_penerima'] ?? $trxBelanja->nama_penerima,
+            'spesifikasi' => $validated['spesifikasi'] ?? $trxBelanja->spesifikasi,
+            'koefisien' => $validated['koefisien'] ?? $trxBelanja->koefisien,
+            'harga_satuan' => $validated['harga_satuan'] ?? $trxBelanja->harga_satuan,
+            'total_harga' => $validated['total_harga'] ?? $trxBelanja->total_harga,
+            'unit_kerja' => $validated['unit_kerja'] ?? $trxBelanja->unit_kerja,
+        ];
+
+        $trxBelanja->update($updateData);
+
+        return redirect()->route('inputdpa')->with('success', 'Data DPA berhasil diperbarui');
     }
 
     public function export(Request $request)

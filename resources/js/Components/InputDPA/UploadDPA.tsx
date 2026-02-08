@@ -205,12 +205,6 @@ export default function UploadDPA() {
                     </div>
                 )}
 
-                <CustomButton variant="secondary" disabled={processing}>
-                    Ubah Data DPA
-                </CustomButton>
-                <CustomButton variant="outlined" disabled={processing}>
-                    Geser Anggaran
-                </CustomButton>
             </div>
         </div>
     );

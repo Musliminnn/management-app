@@ -1,13 +1,21 @@
 import CustomButton from '@/Components/CustomButton';
 import CascadingFilter from '@/Components/InputDPA/CascadingFilter';
+import EditDPAModal from '@/Components/InputDPA/EditDPAModal';
 import UploadDPA from '@/Components/InputDPA/UploadDPA';
 import { formatCurrency } from '@/helper/currency';
 import { useFilters } from '@/hooks';
 import { ParentLayout } from '@/Layouts/MainLayout';
 import { useDataTableStore, useUIStore } from '@/stores';
 import { router } from '@inertiajs/react';
+import { useState } from 'react';
 
 export default function InputDPA() {
+    // State untuk edit modal
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [selectedRow, setSelectedRow] = useState<Record<string, any> | null>(
+        null,
+    );
+
     // Use Zustand stores
     const { isLoading, modals, openModal, closeModal, setLoading } =
         useUIStore();
@@ -92,6 +100,16 @@ export default function InputDPA() {
                 setLoading(false);
             },
         });
+    };
+
+    const handleRowClick = (row: Record<string, any>) => {
+        setSelectedRow(row);
+        setIsEditModalOpen(true);
+    };
+
+    const handleCloseEditModal = () => {
+        setIsEditModalOpen(false);
+        setSelectedRow(null);
     };
 
     return (
@@ -222,7 +240,9 @@ export default function InputDPA() {
                                     {data.map((row, rowIndex) => (
                                         <tr
                                             key={rowIndex}
-                                            className="hover:bg-gray-50"
+                                            className="cursor-pointer hover:bg-blue-50"
+                                            onClick={() => handleRowClick(row)}
+                                            title="Klik untuk mengubah data"
                                         >
                                             {visibleColumns.map((col) => {
                                                 let cellValue = row[col] ?? '-';
@@ -319,6 +339,13 @@ export default function InputDPA() {
                         })}
                     </div>
                 )}
+
+                {/* Edit DPA Modal */}
+                <EditDPAModal
+                    isOpen={isEditModalOpen}
+                    onClose={handleCloseEditModal}
+                    rowData={selectedRow}
+                />
             </div>
         </ParentLayout>
     );
