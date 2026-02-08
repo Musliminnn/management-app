@@ -1,5 +1,7 @@
 import CustomButton from '@/Components/CustomButton';
 import { FilterDropdown } from '@/Components/InputDPA/FilterDropdown';
+import { useAuth } from '@/hooks/useAuth';
+import { MenuEnum } from '@/types/enums';
 import { router } from '@inertiajs/react';
 import { Download, EyeIcon } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -46,6 +48,7 @@ export default function CascadingFilter({
     onExport,
     onPerPageChange,
 }: Props) {
+    const { canExport } = useAuth();
     const [filters, setFilters] = useState<CascadingFilters>(initialFilters);
 
     // Update local state when initialFilters change
@@ -195,15 +198,19 @@ export default function CascadingFilter({
                     <EyeIcon className="size-4" />
                 </CustomButton>
 
-                <CustomButton
-                    variant="secondary"
-                    className="flex items-center justify-center gap-2"
-                    onClick={onExport}
-                    disabled={visibleColumns.length === 0 || isLoading}
-                >
-                    <span>{isLoading ? 'Mengunduh...' : 'Export Excel'}</span>
-                    <Download className="size-4" />
-                </CustomButton>
+                {canExport(MenuEnum.InputDPA) && (
+                    <CustomButton
+                        variant="secondary"
+                        className="flex items-center justify-center gap-2"
+                        onClick={onExport}
+                        disabled={visibleColumns.length === 0 || isLoading}
+                    >
+                        <span>
+                            {isLoading ? 'Mengunduh...' : 'Export Excel'}
+                        </span>
+                        <Download className="size-4" />
+                    </CustomButton>
+                )}
 
                 {/* Reset Button */}
                 {hasActiveFilter && (

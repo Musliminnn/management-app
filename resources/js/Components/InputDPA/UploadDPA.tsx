@@ -1,8 +1,11 @@
 import CustomButton from '@/Components/CustomButton';
+import { useAuth } from '@/hooks/useAuth';
+import { MenuEnum } from '@/types/enums';
 import { useForm } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function UploadDPA() {
+    const { canAdd } = useAuth();
     const [isUploadOpen, setIsUploadOpen] = useState(false);
     const [dragActive, setDragActive] = useState(false);
 
@@ -82,6 +85,11 @@ export default function UploadDPA() {
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
+
+    // Don't render if user doesn't have add permission
+    if (!canAdd(MenuEnum.InputDPA)) {
+        return null;
+    }
 
     return (
         <div className="mb-10 rounded-lg border-2 border-dotted border-black/25 p-4">

@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TrxBelanja;
+use App\Enums\RealisasiStatusEnum;
 use App\Models\RealisasiBelanja;
+use App\Models\TrxBelanja;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class LaporanRealisasiBelanjaController extends Controller
 {
@@ -72,8 +73,9 @@ class LaporanRealisasiBelanjaController extends Controller
             ->get()
             ->groupBy('kode_akun');
 
-        // Get all realisasi for this sub kegiatan
+        // Get all validated realisasi for this sub kegiatan
         $realisasiData = RealisasiBelanja::where('kode_sub_kegiatan', $filters['subKegiatan'])
+            ->where('status', RealisasiStatusEnum::Validated)
             ->get()
             ->groupBy('kode_akun');
 

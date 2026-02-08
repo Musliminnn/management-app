@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\MenuEnum;
+use App\Enums\PermissionEnum;
 use App\Models\RealisasiBelanja;
+use App\Models\RefAkun;
 use App\Models\RefKegiatan;
 use App\Models\RefSubKegiatan;
-use App\Models\RefAkun;
 use App\Models\TrxBelanja;
 use App\Http\Requests\StoreRealisasiBelanjaRequest;
 use App\Http\Requests\UpdateRealisasiBelanjaRequest;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class RealisasiBelanjaController extends Controller
 {
@@ -21,12 +23,12 @@ class RealisasiBelanjaController extends Controller
      */
     public function index()
     {
-        $realisasiBelanja = RealisasiBelanja::with(['kegiatan', 'subKegiatan', 'akun', 'user'])
+        $realisasiBelanja = RealisasiBelanja::with(['kegiatan', 'subKegiatan', 'akun', 'user', 'validator'])
             ->orderBy('created_at', 'desc')
             ->paginate(10);
 
         return Inertia::render('RealisasiBelanja/Index', [
-            'realisasiBelanja' => $realisasiBelanja
+            'realisasiBelanja' => $realisasiBelanja,
         ]);
     }
 
@@ -90,10 +92,10 @@ class RealisasiBelanjaController extends Controller
      */
     public function show(string $id)
     {
-        $realisasiBelanja = RealisasiBelanja::with(['kegiatan', 'subKegiatan', 'akun', 'user'])->findOrFail($id);
+        $realisasiBelanja = RealisasiBelanja::with(['kegiatan', 'subKegiatan', 'akun', 'user', 'validator'])->findOrFail($id);
 
         return Inertia::render('RealisasiBelanja/Show', [
-            'realisasiBelanja' => $realisasiBelanja
+            'realisasiBelanja' => $realisasiBelanja,
         ]);
     }
 
@@ -187,5 +189,51 @@ class RealisasiBelanjaController extends Controller
         ])->sum('realisasi');
 
         return response()->json(['total_realisasi' => $totalRealisasi]);
+    }
+
+    /**
+     * Validate (approve) a realisasi belanja
+     */
+    public function validate(string $id)
+    {
+        $user = Auth::user();
+
+        // Check permission
+        if (! $user->hasPermission(MenuEnum::InputRealisasiBelanja, PermissionEnum::Validate)) {
+            abort(403, 'Anda tidak memiliki izin untuk memvalidasi data.');
+        }
+
+        $realisasiBelanja = RealisasiBelanja::findOrFail($id);
+
+        if (! $realisasiBelanja->isPending()) {
+            return back()->with('error', 'Data sudah divalidasi atau ditolak sebelumnya.');
+        }
+
+        $realisasiBelanja->validate($user);
+
+        return back()->with('success', 'Data realisasi belanja berhasil divalidasi.');
+    }
+
+    /**
+     * Reject a realisasi belanja
+     */
+    public function reject(string $id)
+    {
+        $user = Auth::user();
+
+        // Check permission
+        if (! $user->hasPermission(MenuEnum::InputRealisasiBelanja, PermissionEnum::Validate)) {
+            abort(403, 'Anda tidak memiliki izin untuk menolak data.');
+        }
+
+        $realisasiBelanja = RealisasiBelanja::findOrFail($id);
+
+        if (! $realisasiBelanja->isPending()) {
+            return back()->with('error', 'Data sudah divalidasi atau ditolak sebelumnya.');
+        }
+
+        $realisasiBelanja->reject($user);
+
+        return back()->with('success', 'Data realisasi belanja berhasil ditolak.');
     }
 }

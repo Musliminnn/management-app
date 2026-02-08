@@ -38,6 +38,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('realisasi-belanja.trx-belanja');
     Route::post('/realisasi-belanja/total-realisasi', [RealisasiBelanjaController::class, 'getTotalRealisasiBySpesifikasi'])
         ->name('realisasi-belanja.total-realisasi');
+    Route::post('/realisasi-belanja/{id}/validate', [RealisasiBelanjaController::class, 'validate'])
+        ->name('realisasi-belanja.validate');
+    Route::post('/realisasi-belanja/{id}/reject', [RealisasiBelanjaController::class, 'reject'])
+        ->name('realisasi-belanja.reject');
 });
 
 Route::get('/dashboard', [DashboardController::class, 'index'])

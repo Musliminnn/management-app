@@ -1,5 +1,5 @@
 import { useAuthStore } from '@/stores';
-import { RoleEnum } from '@/types/enums';
+import { MenuEnum, RoleEnum } from '@/types/enums';
 
 /**
  * Hook for authentication-related operations
@@ -8,12 +8,20 @@ export const useAuth = () => {
     const {
         user,
         isAuthenticated,
-        permissions,
+        menuPermissions,
         setUser,
+        setMenuPermissions,
         logout,
         updateProfile,
         hasRole,
-        hasPermission,
+        hasMenuPermission,
+        canView,
+        canAdd,
+        canEdit,
+        canDelete,
+        canValidate,
+        canExport,
+        getMenuPermissions,
     } = useAuthStore();
 
     // Role check helpers
@@ -21,32 +29,44 @@ export const useAuth = () => {
     const isAdmin = () => hasRole(RoleEnum.Admin);
     const isBPP = () => hasRole(RoleEnum.BPP);
     const isPAKPA = () => hasRole(RoleEnum.PAKPA);
+    const isPPTK = () => hasRole(RoleEnum.PPTK);
 
-    // Permission helpers
+    // Legacy permission helpers (for backward compatibility)
     const canManageUsers = () => isSuperadmin() || isAdmin();
-    const canImportData = () => isSuperadmin() || isAdmin() || isBPP();
-    const canViewReports = () => isAuthenticated;
+    const canImportData = () => canAdd(MenuEnum.InputDPA) || isSuperadmin();
+    const canViewReports = () => canView(MenuEnum.LaporanRealisasi);
 
     return {
         // State
         user,
         isAuthenticated,
-        permissions,
-        
+        menuPermissions,
+
         // Actions
         setUser,
+        setMenuPermissions,
         logout,
         updateProfile,
         hasRole,
-        hasPermission,
-        
+
         // Role checks
         isSuperadmin,
         isAdmin,
         isBPP,
         isPAKPA,
-        
-        // Permission checks
+        isPPTK,
+
+        // Menu permission checks
+        hasMenuPermission,
+        canView,
+        canAdd,
+        canEdit,
+        canDelete,
+        canValidate,
+        canExport,
+        getMenuPermissions,
+
+        // Legacy permission checks
         canManageUsers,
         canImportData,
         canViewReports,

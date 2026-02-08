@@ -1,7 +1,9 @@
 import CustomButton from '@/Components/CustomButton';
 import { FilterDropdown } from '@/Components/InputDPA/FilterDropdown';
 import { formatCurrency } from '@/helper/currency';
+import { useAuth } from '@/hooks/useAuth';
 import { ParentLayout } from '@/Layouts/MainLayout';
+import { MenuEnum } from '@/types/enums';
 import { router } from '@inertiajs/react';
 import { Download, FileText, RefreshCw } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -61,6 +63,7 @@ export default function LaporanRealisasiBelanja({
     totals,
 }: Props) {
 
+    const { canExport } = useAuth();
     const [filters, setFilters] = useState<CascadingFilters>(initialFilters);
     const [isLoading, setIsLoading] = useState(false);
 
@@ -179,17 +182,21 @@ export default function LaporanRealisasiBelanja({
                         </div>
 
                         {/* Export PDF Button */}
-                        {reportData && reportData.length > 0 && (
-                            <CustomButton
-                                variant="secondary"
-                                className="flex items-center justify-center gap-2"
-                                onClick={handleExportPdf}
-                                disabled={isLoading}
-                            >
-                                <span>{isLoading ? 'Mengunduh...' : 'Export PDF'}</span>
-                                <Download className="size-4" />
-                            </CustomButton>
-                        )}
+                        {reportData &&
+                            reportData.length > 0 &&
+                            canExport(MenuEnum.LaporanRealisasi) && (
+                                <CustomButton
+                                    variant="secondary"
+                                    className="flex items-center justify-center gap-2"
+                                    onClick={handleExportPdf}
+                                    disabled={isLoading}
+                                >
+                                    <span>
+                                        {isLoading ? 'Mengunduh...' : 'Export PDF'}
+                                    </span>
+                                    <Download className="size-4" />
+                                </CustomButton>
+                            )}
 
                         {/* Reset Button */}
                         {hasActiveFilter && (

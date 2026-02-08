@@ -8,9 +8,10 @@ import { useAuthStore, useFilterStore, useDataTableStore } from '@/stores';
 export const useInertiaSync = () => {
     const page = usePage();
     const props = page.props as any;
-    
-    const setUser = useAuthStore(state => state.setUser);
-    const setFilterOptions = useFilterStore(state => state.setFilterOptions);
+
+    const setUser = useAuthStore((state) => state.setUser);
+    const setMenuPermissions = useAuthStore((state) => state.setMenuPermissions);
+    const setFilterOptions = useFilterStore((state) => state.setFilterOptions);
     const setCascadingFilter = useFilterStore(state => state.setCascadingFilter);
     const setLegacyFilter = useFilterStore(state => state.setLegacyFilter);
     const setData = useDataTableStore(state => state.setData);
@@ -21,7 +22,10 @@ export const useInertiaSync = () => {
         if (props.auth?.user) {
             setUser(props.auth.user);
         }
-    }, [props.auth?.user, setUser]);
+        if (props.auth?.permissions) {
+            setMenuPermissions(props.auth.permissions);
+        }
+    }, [props.auth?.user, props.auth?.permissions, setUser, setMenuPermissions]);
 
     // Sync filter options
     useEffect(() => {

@@ -1,16 +1,22 @@
+import { formatCurrency } from '@/helper/currency';
 import { useAuth } from '@/hooks';
 import { ParentLayout } from '@/Layouts/MainLayout';
-import { formatCurrency } from '@/helper/currency';
+import {
+    MenuEnum,
+    RealisasiStatusColor,
+    RealisasiStatusEnum,
+    RealisasiStatusLabel,
+} from '@/types/enums';
 import { Link } from '@inertiajs/react';
 import {
-    Wallet,
-    TrendingUp,
-    PiggyBank,
-    FileText,
-    Receipt,
     ArrowRight,
     BarChart3,
     Clock,
+    FileText,
+    PiggyBank,
+    Receipt,
+    TrendingUp,
+    Wallet,
 } from 'lucide-react';
 
 interface Stats {
@@ -39,6 +45,7 @@ interface RecentRealisasi {
     sub_kegiatan: string;
     realisasi: number;
     user: string;
+    status: RealisasiStatusEnum;
 }
 
 interface Props {
@@ -54,7 +61,7 @@ export default function Dashboard({
     recentRealisasi,
     topProgramAnggaran,
 }: Props) {
-    const { user } = useAuth();
+    const { user, canView, canAdd } = useAuth();
 
     // Progress bar color based on percentage
     const getProgressColor = (percentage: number) => {
@@ -312,30 +319,52 @@ export default function Dashboard({
                             </div>
                         ) : (
                             <div className="space-y-3">
-                                {recentRealisasi.map((item) => (
-                                    <div
-                                        key={item.id}
-                                        className="rounded-lg border bg-gray-50 p-3"
-                                    >
-                                        <div className="mb-1 flex items-center justify-between">
-                                            <span className="text-xs text-gray-500">
-                                                {item.tanggal}
-                                            </span>
-                                            <span className="text-xs text-gray-500">
-                                                oleh {item.user}
-                                            </span>
-                                        </div>
-                                        <p
-                                            className="line-clamp-1 text-sm font-medium text-gray-800"
-                                            title={item.sub_kegiatan}
+                                {recentRealisasi.map((item) => {
+                                    const statusColors =
+                                        RealisasiStatusColor[item.status] || {
+                                            bg: 'bg-gray-100',
+                                            text: 'text-gray-800',
+                                        };
+                                    const statusLabel =
+                                        RealisasiStatusLabel[item.status] ||
+                                        item.status;
+
+                                    return (
+                                        <Link
+                                            key={item.id}
+                                            href={`/realisasi-belanja/${item.id}`}
+                                            className="block rounded-lg border bg-gray-50 p-3 transition-colors hover:bg-gray-100"
                                         >
-                                            {item.sub_kegiatan}
-                                        </p>
-                                        <p className="mt-1 text-sm font-bold text-green-600">
-                                            Rp {formatCurrency(item.realisasi)}
-                                        </p>
-                                    </div>
-                                ))}
+                                            <div className="mb-1 flex items-center justify-between">
+                                                <span className="text-xs text-gray-500">
+                                                    {item.tanggal}
+                                                </span>
+                                                <span
+                                                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors.bg} ${statusColors.text}`}
+                                                >
+                                                    {statusLabel}
+                                                </span>
+                                            </div>
+                                            <p
+                                                className="line-clamp-1 text-sm font-medium text-gray-800"
+                                                title={item.sub_kegiatan}
+                                            >
+                                                {item.sub_kegiatan}
+                                            </p>
+                                            <div className="mt-1 flex items-center justify-between">
+                                                <p className="text-sm font-bold text-green-600">
+                                                    Rp{' '}
+                                                    {formatCurrency(
+                                                        item.realisasi,
+                                                    )}
+                                                </p>
+                                                <span className="text-xs text-gray-500">
+                                                    oleh {item.user}
+                                                </span>
+                                            </div>
+                                        </Link>
+                                    );
+                                })}
                             </div>
                         )}
                     </div>
@@ -348,73 +377,81 @@ export default function Dashboard({
                         Aksi Cepat
                     </h2>
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                        <Link
-                            href="/input-dpa"
-                            className="flex items-center gap-3 rounded-lg border bg-blue-50 p-4 transition-colors hover:bg-blue-100"
-                        >
-                            <div className="rounded-full bg-blue-500 p-2 text-white">
-                                <FileText className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <p className="font-medium text-gray-800">
-                                    Input DPA
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                    Kelola data anggaran
-                                </p>
-                            </div>
-                        </Link>
+                        {canView(MenuEnum.InputDPA) && (
+                            <Link
+                                href="/input-dpa"
+                                className="flex items-center gap-3 rounded-lg border bg-blue-50 p-4 transition-colors hover:bg-blue-100"
+                            >
+                                <div className="rounded-full bg-blue-500 p-2 text-white">
+                                    <FileText className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <p className="font-medium text-gray-800">
+                                        Input DPA
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        Kelola data anggaran
+                                    </p>
+                                </div>
+                            </Link>
+                        )}
 
-                        <Link
-                            href="/realisasi-belanja/create"
-                            className="flex items-center gap-3 rounded-lg border bg-green-50 p-4 transition-colors hover:bg-green-100"
-                        >
-                            <div className="rounded-full bg-green-500 p-2 text-white">
-                                <TrendingUp className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <p className="font-medium text-gray-800">
-                                    Input Realisasi
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                    Tambah transaksi baru
-                                </p>
-                            </div>
-                        </Link>
+                        {canAdd(MenuEnum.InputRealisasiBelanja) && (
+                            <Link
+                                href="/realisasi-belanja/create"
+                                className="flex items-center gap-3 rounded-lg border bg-green-50 p-4 transition-colors hover:bg-green-100"
+                            >
+                                <div className="rounded-full bg-green-500 p-2 text-white">
+                                    <TrendingUp className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <p className="font-medium text-gray-800">
+                                        Input Realisasi
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        Tambah transaksi baru
+                                    </p>
+                                </div>
+                            </Link>
+                        )}
 
-                        <Link
-                            href="/realisasi-belanja"
-                            className="flex items-center gap-3 rounded-lg border bg-orange-50 p-4 transition-colors hover:bg-orange-100"
-                        >
-                            <div className="rounded-full bg-orange-500 p-2 text-white">
-                                <Receipt className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <p className="font-medium text-gray-800">
-                                    Daftar Realisasi
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                    Lihat semua transaksi
-                                </p>
-                            </div>
-                        </Link>
+                        {canView(MenuEnum.InputRealisasiBelanja) && (
+                            <Link
+                                href="/realisasi-belanja"
+                                className="flex items-center gap-3 rounded-lg border bg-orange-50 p-4 transition-colors hover:bg-orange-100"
+                            >
+                                <div className="rounded-full bg-orange-500 p-2 text-white">
+                                    <Receipt className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <p className="font-medium text-gray-800">
+                                        Daftar Realisasi
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        Lihat semua transaksi
+                                    </p>
+                                </div>
+                            </Link>
+                        )}
 
-                        <Link
-                            href="/laporan-realisasi-belanja"
-                            className="flex items-center gap-3 rounded-lg border bg-purple-50 p-4 transition-colors hover:bg-purple-100"
-                        >
-                            <div className="rounded-full bg-purple-500 p-2 text-white">
-                                <BarChart3 className="h-5 w-5" />
-                            </div>
-                            <div>
-                                <p className="font-medium text-gray-800">
-                                    Laporan
-                                </p>
-                                <p className="text-xs text-gray-500">
-                                    Lihat laporan realisasi
-                                </p>
-                            </div>
-                        </Link>
+                        {canView(MenuEnum.LaporanRealisasi) && (
+                            <Link
+                                href="/laporan-realisasi-belanja"
+                                className="flex items-center gap-3 rounded-lg border bg-purple-50 p-4 transition-colors hover:bg-purple-100"
+                            >
+                                <div className="rounded-full bg-purple-500 p-2 text-white">
+                                    <BarChart3 className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <p className="font-medium text-gray-800">
+                                        Laporan
+                                    </p>
+                                    <p className="text-xs text-gray-500">
+                                        Lihat laporan realisasi
+                                    </p>
+                                </div>
+                            </Link>
+                        )}
                     </div>
                 </div>
             </div>

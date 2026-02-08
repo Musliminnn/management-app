@@ -1,3 +1,5 @@
+import { useAuth } from '@/hooks/useAuth';
+import { MenuEnum } from '@/types/enums';
 import { useForm } from '@inertiajs/react';
 import { useEffect } from 'react';
 
@@ -12,6 +14,7 @@ export default function EditDPAModal({
     onClose,
     rowData,
 }: EditDPAModalProps) {
+    const { canEdit } = useAuth();
     const { data, setData, put, processing, errors, reset } = useForm<
         Record<string, any>
     >({});
@@ -42,6 +45,9 @@ export default function EditDPAModal({
     };
 
     if (!isOpen || !rowData) return null;
+
+    // Check if user has edit permission
+    const hasEditPermission = canEdit(MenuEnum.InputDPA);
 
     // Fields yang bisa diedit (field dari TrxBelanja)
     const editableFields = [
@@ -120,7 +126,10 @@ export default function EditDPAModal({
                     {/* Editable Fields */}
                     <div className="mb-6">
                         <h3 className="mb-3 text-sm font-semibold text-gray-700">
-                            Data Belanja (Dapat diubah)
+                            Data Belanja{' '}
+                            {hasEditPermission
+                                ? '(Dapat diubah)'
+                                : '(Hanya lihat)'}
                         </h3>
                         <div className="grid grid-cols-2 gap-3">
                             {editableFields.map((field) => (
@@ -134,7 +143,12 @@ export default function EditDPAModal({
                                         onChange={(e) =>
                                             setData(field.key, e.target.value)
                                         }
-                                        className="w-full rounded border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                        disabled={!hasEditPermission}
+                                        className={`w-full rounded border px-3 py-2 text-sm ${
+                                            hasEditPermission
+                                                ? 'border-gray-300 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500'
+                                                : 'border-gray-200 bg-gray-100 text-gray-600'
+                                        }`}
                                     />
                                     {errors[field.key] && (
                                         <p className="mt-1 text-xs text-red-500">
@@ -152,26 +166,28 @@ export default function EditDPAModal({
                             onClick={onClose}
                             className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
                         >
-                            Batal
+                            {hasEditPermission ? 'Batal' : 'Tutup'}
                         </button>
-                        <button
-                            type="submit"
-                            disabled={processing}
-                            className={`rounded-lg px-4 py-2 font-medium text-white ${
-                                processing
-                                    ? 'cursor-not-allowed bg-gray-400'
-                                    : 'bg-main hover:bg-main/90'
-                            }`}
-                        >
-                            {processing ? (
-                                <div className="flex items-center gap-2">
-                                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                                    Menyimpan...
-                                </div>
-                            ) : (
-                                'Simpan Perubahan'
-                            )}
-                        </button>
+                        {hasEditPermission && (
+                            <button
+                                type="submit"
+                                disabled={processing}
+                                className={`rounded-lg px-4 py-2 font-medium text-white ${
+                                    processing
+                                        ? 'cursor-not-allowed bg-gray-400'
+                                        : 'bg-main hover:bg-main/90'
+                                }`}
+                            >
+                                {processing ? (
+                                    <div className="flex items-center gap-2">
+                                        <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                                        Menyimpan...
+                                    </div>
+                                ) : (
+                                    'Simpan Perubahan'
+                                )}
+                            </button>
+                        )}
                     </div>
                 </form>
             </div>

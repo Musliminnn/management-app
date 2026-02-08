@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RealisasiStatusEnum;
 use App\Models\TrxBelanja;
 use App\Models\RealisasiBelanja;
 use Inertia\Inertia;
@@ -10,15 +11,15 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        // Summary statistics
+        // Summary statistics - only count validated realisasi
         $totalAnggaran = TrxBelanja::sum('total_harga');
-        $totalRealisasi = RealisasiBelanja::sum('realisasi');
+        $totalRealisasi = RealisasiBelanja::where('status', RealisasiStatusEnum::Validated)->sum('realisasi');
         $sisaAnggaran = $totalAnggaran - $totalRealisasi;
         $persentaseRealisasi = $totalAnggaran > 0 ? ($totalRealisasi / $totalAnggaran) * 100 : 0;
 
-        // Counts
+        // Counts - only count validated realisasi
         $jumlahItemAnggaran = TrxBelanja::count();
-        $jumlahTransaksiRealisasi = RealisasiBelanja::count();
+        $jumlahTransaksiRealisasi = RealisasiBelanja::where('status', RealisasiStatusEnum::Validated)->count();
 
         // Realisasi per Program
         $realisasiPerProgram = $this->getRealisasiPerProgram();
@@ -26,7 +27,7 @@ class DashboardController extends Controller
         // Anggaran per Program
         $anggaranPerProgram = $this->getAnggaranPerProgram();
 
-        // Recent realisasi transactions
+        // Recent realisasi transactions (all statuses)
         $recentRealisasi = RealisasiBelanja::with(['kegiatan', 'subKegiatan', 'akun', 'user'])
             ->orderBy('created_at', 'desc')
             ->take(5)
@@ -39,6 +40,7 @@ class DashboardController extends Controller
                     'sub_kegiatan' => $item->subKegiatan->nama ?? '-',
                     'realisasi' => $item->realisasi,
                     'user' => $item->user->name ?? '-',
+                    'status' => $item->status->value,
                 ];
             });
 
@@ -67,6 +69,7 @@ class DashboardController extends Controller
     private function getRealisasiPerProgram()
     {
         $realisasi = RealisasiBelanja::with('subKegiatan.kegiatan.program')
+            ->where('status', RealisasiStatusEnum::Validated)
             ->get()
             ->groupBy(function ($item) {
                 return $item->subKegiatan->kegiatan->program->kode ?? 'Unknown';
@@ -96,10 +99,11 @@ class DashboardController extends Controller
             ->map(function ($items, $kode) {
                 $program = $items->first()->subKegiatan->kegiatan->program ?? null;
 
-                // Get realisasi for this program
-                $realisasi = RealisasiBelanja::whereHas('subKegiatan.kegiatan.program', function ($q) use ($kode) {
-                    $q->where('kode', $kode);
-                })->sum('realisasi');
+                // Get validated realisasi for this program
+                $realisasi = RealisasiBelanja::where('status', RealisasiStatusEnum::Validated)
+                    ->whereHas('subKegiatan.kegiatan.program', function ($q) use ($kode) {
+                        $q->where('kode', $kode);
+                    })->sum('realisasi');
 
                 $totalAnggaran = $items->sum('total_harga');
                 $persentase = $totalAnggaran > 0 ? ($realisasi / $totalAnggaran) * 100 : 0;

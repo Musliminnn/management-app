@@ -1,7 +1,17 @@
+import ConfirmationDialog from '@/Components/ConfirmationDialog';
 import CustomButton from '@/Components/CustomButton';
 import { formatCurrency } from '@/helper/currency';
+import { useAuth } from '@/hooks/useAuth';
 import { ParentLayout } from '@/Layouts/MainLayout';
-import { Head, Link } from '@inertiajs/react';
+import {
+    MenuEnum,
+    RealisasiStatusColor,
+    RealisasiStatusEnum,
+    RealisasiStatusLabel,
+} from '@/types/enums';
+import { Head, Link, router } from '@inertiajs/react';
+import { CheckCircle, Edit, Trash2, XCircle } from 'lucide-react';
+import { useState } from 'react';
 
 interface RealisasiBelanjaData {
     id: number;
@@ -19,12 +29,16 @@ interface RealisasiBelanjaData {
     realisasi: number;
     tujuan_pembayaran: string;
     user_id: number;
+    status: RealisasiStatusEnum;
+    validated_by: number | null;
+    validated_at: string | null;
     created_at: string;
     updated_at: string;
     kegiatan?: { kode: string; nama: string };
     sub_kegiatan?: { kode: string; nama: string };
     akun?: { kode: string; nama: string };
     user?: { id: number; name: string };
+    validator?: { id: number; name: string };
 }
 
 interface Props {
@@ -37,7 +51,112 @@ interface Props {
     };
 }
 
+type DialogAction = 'approve' | 'reject' | 'delete' | null;
+
 export default function Index({ realisasiBelanja }: Props) {
+    const { canAdd, canEdit, canDelete, canValidate } = useAuth();
+
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [dialogAction, setDialogAction] = useState<DialogAction>(null);
+    const [selectedId, setSelectedId] = useState<number | null>(null);
+    const [processing, setProcessing] = useState(false);
+
+    const openDialog = (action: DialogAction, id: number) => {
+        setDialogAction(action);
+        setSelectedId(id);
+        setDialogOpen(true);
+    };
+
+    const closeDialog = () => {
+        setDialogOpen(false);
+        setDialogAction(null);
+        setSelectedId(null);
+    };
+
+    const handleConfirm = () => {
+        if (!selectedId || !dialogAction) return;
+
+        setProcessing(true);
+
+        const actions = {
+            approve: () =>
+                router.post(`/realisasi-belanja/${selectedId}/validate`, {}, {
+                    onFinish: () => {
+                        setProcessing(false);
+                        closeDialog();
+                    },
+                }),
+            reject: () =>
+                router.post(`/realisasi-belanja/${selectedId}/reject`, {}, {
+                    onFinish: () => {
+                        setProcessing(false);
+                        closeDialog();
+                    },
+                }),
+            delete: () =>
+                router.delete(`/realisasi-belanja/${selectedId}`, {
+                    onFinish: () => {
+                        setProcessing(false);
+                        closeDialog();
+                    },
+                }),
+        };
+
+        actions[dialogAction]?.();
+    };
+
+    const getDialogConfig = () => {
+        switch (dialogAction) {
+            case 'approve':
+                return {
+                    title: 'Setujui Realisasi Belanja',
+                    message:
+                        'Apakah Anda yakin ingin menyetujui data realisasi belanja ini? Data yang sudah disetujui akan masuk ke laporan.',
+                    type: 'approve' as const,
+                    confirmText: 'Ya, Setujui',
+                };
+            case 'reject':
+                return {
+                    title: 'Tolak Realisasi Belanja',
+                    message:
+                        'Apakah Anda yakin ingin menolak data realisasi belanja ini? Data yang ditolak tidak akan masuk ke laporan.',
+                    type: 'reject' as const,
+                    confirmText: 'Ya, Tolak',
+                };
+            case 'delete':
+                return {
+                    title: 'Hapus Realisasi Belanja',
+                    message:
+                        'Apakah Anda yakin ingin menghapus data realisasi belanja ini? Tindakan ini tidak dapat dibatalkan.',
+                    type: 'delete' as const,
+                    confirmText: 'Ya, Hapus',
+                };
+            default:
+                return {
+                    title: '',
+                    message: '',
+                    type: 'confirm' as const,
+                    confirmText: 'Ya',
+                };
+        }
+    };
+
+    const getStatusBadge = (status: RealisasiStatusEnum) => {
+        const colors = RealisasiStatusColor[status] || {
+            bg: 'bg-gray-100',
+            text: 'text-gray-800',
+        };
+        const label = RealisasiStatusLabel[status] || status;
+
+        return (
+            <span
+                className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${colors.bg} ${colors.text}`}
+            >
+                {label}
+            </span>
+        );
+    };
+
     return (
         <ParentLayout>
             <Head title="Input Realisasi Belanja" />
@@ -55,27 +174,29 @@ export default function Index({ realisasiBelanja }: Props) {
                                     keuangan
                                 </p>
                             </div>
-                            <Link href="/realisasi-belanja/create">
-                                <CustomButton
-                                    variant="secondary"
-                                    className="flex items-center gap-2 border-white/30 bg-white/10 px-4 py-2 text-white transition-all duration-200 hover:bg-white/20"
-                                >
-                                    <svg
-                                        className="h-4 w-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
+                            {canAdd(MenuEnum.InputRealisasiBelanja) && (
+                                <Link href="/realisasi-belanja/create">
+                                    <CustomButton
+                                        variant="secondary"
+                                        className="flex items-center gap-2 border-white/30 bg-white/10 px-4 py-2 text-white transition-all duration-200 hover:bg-white/20"
                                     >
-                                        <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M12 4v16m8-8H4"
-                                        />
-                                    </svg>
-                                    Tambah Realisasi
-                                </CustomButton>
-                            </Link>
+                                        <svg
+                                            className="h-4 w-4"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            viewBox="0 0 24 24"
+                                        >
+                                            <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M12 4v16m8-8H4"
+                                            />
+                                        </svg>
+                                        Tambah Realisasi
+                                    </CustomButton>
+                                </Link>
+                            )}
                         </div>
                     </div>
 
@@ -108,6 +229,9 @@ export default function Index({ realisasiBelanja }: Props) {
                                         Input Oleh
                                     </th>
                                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-main">
+                                        Status
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-main">
                                         Aksi
                                     </th>
                                 </tr>
@@ -116,7 +240,7 @@ export default function Index({ realisasiBelanja }: Props) {
                                 {realisasiBelanja.data.length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan={9}
+                                            colSpan={10}
                                             className="px-6 py-12 text-center text-gray-500"
                                         >
                                             <div className="flex flex-col items-center">
@@ -149,7 +273,12 @@ export default function Index({ realisasiBelanja }: Props) {
                                     realisasiBelanja.data.map((item, index) => (
                                         <tr
                                             key={item.id}
-                                            className="hover:bg-gray-50"
+                                            className="cursor-pointer hover:bg-gray-50"
+                                            onClick={() =>
+                                                router.visit(
+                                                    `/realisasi-belanja/${item.id}`,
+                                                )
+                                            }
                                         >
                                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                                                 {(realisasiBelanja.current_page -
@@ -206,34 +335,84 @@ export default function Index({ realisasiBelanja }: Props) {
                                             <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-900">
                                                 {item.user?.name || '-'}
                                             </td>
-                                            <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
-                                                <div className="flex space-x-2">
-                                                    <Link
-                                                        href={`/realisasi-belanja/${item.id}`}
-                                                        className="font-medium text-main transition-colors duration-200 hover:text-main/80"
-                                                    >
-                                                        Detail
-                                                    </Link>
-                                                    <Link
-                                                        href={`/realisasi-belanja/${item.id}/edit`}
-                                                        className="font-medium text-yellow-600 transition-colors duration-200 hover:text-yellow-800"
-                                                    >
-                                                        Edit
-                                                    </Link>
-                                                    <button
-                                                        className="font-medium text-red-600 transition-colors duration-200 hover:text-red-800"
-                                                        onClick={() => {
-                                                            if (
-                                                                confirm(
-                                                                    'Apakah Anda yakin ingin menghapus data ini?',
-                                                                )
-                                                            ) {
-                                                                // Handle delete
-                                                            }
-                                                        }}
-                                                    >
-                                                        Hapus
-                                                    </button>
+                                            <td className="whitespace-nowrap px-6 py-4 text-sm">
+                                                {getStatusBadge(item.status)}
+                                            </td>
+                                            <td
+                                                className="whitespace-nowrap px-6 py-4 text-sm font-medium"
+                                                onClick={(e) =>
+                                                    e.stopPropagation()
+                                                }
+                                            >
+                                                <div className="flex items-center gap-1">
+                                                    {/* Edit Button - Only for Pending */}
+                                                    {canEdit(
+                                                        MenuEnum.InputRealisasiBelanja,
+                                                    ) &&
+                                                        item.status ===
+                                                            RealisasiStatusEnum.Pending && (
+                                                            <Link
+                                                                href={`/realisasi-belanja/${item.id}/edit`}
+                                                                className="inline-flex items-center justify-center rounded-lg border border-yellow-200 bg-yellow-50 p-2 text-yellow-600 transition-all hover:bg-yellow-100 hover:text-yellow-700"
+                                                                title="Edit Data"
+                                                            >
+                                                                <Edit className="h-4 w-4" />
+                                                            </Link>
+                                                        )}
+
+                                                    {/* Delete Button - Only for Pending */}
+                                                    {canDelete(
+                                                        MenuEnum.InputRealisasiBelanja,
+                                                    ) &&
+                                                        item.status ===
+                                                            RealisasiStatusEnum.Pending && (
+                                                            <button
+                                                                className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 p-2 text-red-600 transition-all hover:bg-red-100 hover:text-red-700"
+                                                                onClick={() =>
+                                                                    openDialog(
+                                                                        'delete',
+                                                                        item.id,
+                                                                    )
+                                                                }
+                                                                title="Hapus Data"
+                                                            >
+                                                                <Trash2 className="h-4 w-4" />
+                                                            </button>
+                                                        )}
+
+                                                    {/* Validation Buttons - Only for Pending and users with validate permission */}
+                                                    {canValidate(
+                                                        MenuEnum.InputRealisasiBelanja,
+                                                    ) &&
+                                                        item.status ===
+                                                            RealisasiStatusEnum.Pending && (
+                                                            <>
+                                                                <button
+                                                                    className="inline-flex items-center justify-center rounded-lg border border-green-200 bg-green-50 p-2 text-green-600 transition-all hover:bg-green-100 hover:text-green-700"
+                                                                    onClick={() =>
+                                                                        openDialog(
+                                                                            'approve',
+                                                                            item.id,
+                                                                        )
+                                                                    }
+                                                                    title="Setujui / Validasi"
+                                                                >
+                                                                    <CheckCircle className="h-4 w-4" />
+                                                                </button>
+                                                                <button
+                                                                    className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 p-2 text-red-600 transition-all hover:bg-red-100 hover:text-red-700"
+                                                                    onClick={() =>
+                                                                        openDialog(
+                                                                            'reject',
+                                                                            item.id,
+                                                                        )
+                                                                    }
+                                                                    title="Tolak"
+                                                                >
+                                                                    <XCircle className="h-4 w-4" />
+                                                                </button>
+                                                            </>
+                                                        )}
                                                 </div>
                                             </td>
                                         </tr>
@@ -284,6 +463,15 @@ export default function Index({ realisasiBelanja }: Props) {
                     )}
                 </div>
             </div>
+
+            {/* Confirmation Dialog */}
+            <ConfirmationDialog
+                isOpen={dialogOpen}
+                onClose={closeDialog}
+                onConfirm={handleConfirm}
+                processing={processing}
+                {...getDialogConfig()}
+            />
         </ParentLayout>
     );
 }

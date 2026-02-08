@@ -1,6 +1,16 @@
-import { ParentLayout } from '@/Layouts/MainLayout';
+import ConfirmationDialog from '@/Components/ConfirmationDialog';
 import { formatCurrency } from '@/helper/currency';
-import { Head, Link } from '@inertiajs/react';
+import { useAuth } from '@/hooks/useAuth';
+import { ParentLayout } from '@/Layouts/MainLayout';
+import {
+    MenuEnum,
+    RealisasiStatusColor,
+    RealisasiStatusEnum,
+    RealisasiStatusLabel,
+} from '@/types/enums';
+import { Head, Link, router } from '@inertiajs/react';
+import { ArrowLeft, CheckCircle, Edit, XCircle } from 'lucide-react';
+import { useState } from 'react';
 
 interface RealisasiBelanjaData {
     id: number;
@@ -18,21 +28,122 @@ interface RealisasiBelanjaData {
     realisasi: number;
     tujuan_pembayaran: string;
     user_id: number;
+    status: RealisasiStatusEnum;
+    validated_by: number | null;
+    validated_at: string | null;
     created_at: string;
     updated_at: string;
     kegiatan?: { kode: string; nama: string };
     sub_kegiatan?: { kode: string; nama: string };
     akun?: { kode: string; nama: string };
     user?: { id: number; name: string };
+    validator?: { id: number; name: string };
 }
 
 interface Props {
     realisasiBelanja: RealisasiBelanjaData;
 }
 
+type DialogAction = 'approve' | 'reject' | null;
+
 export default function Show({ realisasiBelanja }: Props) {
+    const { canEdit, canValidate } = useAuth();
     const totalHarga =
         realisasiBelanja.koefisien * realisasiBelanja.harga_satuan;
+
+    const isPending = realisasiBelanja.status === RealisasiStatusEnum.Pending;
+
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [dialogAction, setDialogAction] = useState<DialogAction>(null);
+    const [processing, setProcessing] = useState(false);
+
+    const openDialog = (action: DialogAction) => {
+        setDialogAction(action);
+        setDialogOpen(true);
+    };
+
+    const closeDialog = () => {
+        setDialogOpen(false);
+        setDialogAction(null);
+    };
+
+    const handleConfirm = () => {
+        if (!dialogAction) return;
+
+        setProcessing(true);
+
+        const actions = {
+            approve: () =>
+                router.post(
+                    `/realisasi-belanja/${realisasiBelanja.id}/validate`,
+                    {},
+                    {
+                        onFinish: () => {
+                            setProcessing(false);
+                            closeDialog();
+                        },
+                    },
+                ),
+            reject: () =>
+                router.post(
+                    `/realisasi-belanja/${realisasiBelanja.id}/reject`,
+                    {},
+                    {
+                        onFinish: () => {
+                            setProcessing(false);
+                            closeDialog();
+                        },
+                    },
+                ),
+        };
+
+        actions[dialogAction]?.();
+    };
+
+    const getDialogConfig = () => {
+        switch (dialogAction) {
+            case 'approve':
+                return {
+                    title: 'Setujui Realisasi Belanja',
+                    message:
+                        'Apakah Anda yakin ingin menyetujui data realisasi belanja ini? Data yang sudah disetujui akan masuk ke laporan.',
+                    type: 'approve' as const,
+                    confirmText: 'Ya, Setujui',
+                };
+            case 'reject':
+                return {
+                    title: 'Tolak Realisasi Belanja',
+                    message:
+                        'Apakah Anda yakin ingin menolak data realisasi belanja ini? Data yang ditolak tidak akan masuk ke laporan.',
+                    type: 'reject' as const,
+                    confirmText: 'Ya, Tolak',
+                };
+            default:
+                return {
+                    title: '',
+                    message: '',
+                    type: 'confirm' as const,
+                    confirmText: 'Ya',
+                };
+        }
+    };
+
+    const getStatusBadge = () => {
+        const status = realisasiBelanja.status;
+        const colors = RealisasiStatusColor[status] || {
+            bg: 'bg-gray-100',
+            text: 'text-gray-800',
+        };
+        const label = RealisasiStatusLabel[status] || status;
+
+        return (
+            <span
+                className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${colors.bg} ${colors.text}`}
+            >
+                {label}
+            </span>
+        );
+    };
 
     return (
         <ParentLayout>
@@ -53,17 +164,46 @@ export default function Show({ realisasiBelanja }: Props) {
                                     ).toLocaleDateString('id-ID')}
                                 </p>
                             </div>
-                            <div className="flex space-x-2">
-                                <Link
-                                    href={`/realisasi-belanja/${realisasiBelanja.id}/edit`}
-                                    className="rounded-lg border border-white/30 bg-white/10 px-4 py-2 font-medium text-white transition-all duration-200 hover:bg-white/20"
-                                >
-                                    Edit
-                                </Link>
+                            <div className="flex items-center gap-2">
+                                {getStatusBadge()}
+                                {canEdit(MenuEnum.InputRealisasiBelanja) &&
+                                    isPending && (
+                                        <Link
+                                            href={`/realisasi-belanja/${realisasiBelanja.id}/edit`}
+                                            className="inline-flex items-center gap-2 rounded-lg border border-yellow-400 bg-yellow-500 px-4 py-2 font-medium text-white transition-all duration-200 hover:bg-yellow-600"
+                                        >
+                                            <Edit className="h-4 w-4" />
+                                            Edit
+                                        </Link>
+                                    )}
+                                {canValidate(MenuEnum.InputRealisasiBelanja) &&
+                                    isPending && (
+                                        <>
+                                            <button
+                                                onClick={() =>
+                                                    openDialog('approve')
+                                                }
+                                                className="inline-flex items-center gap-2 rounded-lg border border-green-400 bg-green-500 px-4 py-2 font-medium text-white transition-all duration-200 hover:bg-green-600"
+                                            >
+                                                <CheckCircle className="h-4 w-4" />
+                                                Setujui
+                                            </button>
+                                            <button
+                                                onClick={() =>
+                                                    openDialog('reject')
+                                                }
+                                                className="inline-flex items-center gap-2 rounded-lg border border-red-400 bg-red-500 px-4 py-2 font-medium text-white transition-all duration-200 hover:bg-red-600"
+                                            >
+                                                <XCircle className="h-4 w-4" />
+                                                Tolak
+                                            </button>
+                                        </>
+                                    )}
                                 <Link
                                     href="/realisasi-belanja"
-                                    className="rounded-lg border border-white/40 bg-white/20 px-4 py-2 font-medium text-white transition-all duration-200 hover:bg-white/30"
+                                    className="inline-flex items-center gap-2 rounded-lg border border-white/40 bg-white/20 px-4 py-2 font-medium text-white transition-all duration-200 hover:bg-white/30"
                                 >
+                                    <ArrowLeft className="h-4 w-4" />
                                     Kembali
                                 </Link>
                             </div>
@@ -264,7 +404,7 @@ export default function Show({ realisasiBelanja }: Props) {
 
                         {/* Informasi Tambahan */}
                         <div className="mt-8 border-t border-gray-200 pt-6">
-                            <div className="grid grid-cols-1 gap-6 text-sm text-gray-600 md:grid-cols-3">
+                            <div className="grid grid-cols-1 gap-6 text-sm text-gray-600 md:grid-cols-4">
                                 <div>
                                     <label className="block font-medium">
                                         Dibuat oleh
@@ -286,12 +426,23 @@ export default function Show({ realisasiBelanja }: Props) {
                                 </div>
                                 <div>
                                     <label className="block font-medium">
-                                        Terakhir Diperbarui
+                                        Divalidasi oleh
                                     </label>
                                     <p>
-                                        {new Date(
-                                            realisasiBelanja.updated_at,
-                                        ).toLocaleString('id-ID')}
+                                        {realisasiBelanja.validator?.name ||
+                                            '-'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className="block font-medium">
+                                        Tanggal Validasi
+                                    </label>
+                                    <p>
+                                        {realisasiBelanja.validated_at
+                                            ? new Date(
+                                                  realisasiBelanja.validated_at,
+                                              ).toLocaleString('id-ID')
+                                            : '-'}
                                     </p>
                                 </div>
                             </div>
@@ -299,6 +450,15 @@ export default function Show({ realisasiBelanja }: Props) {
                     </div>
                 </div>
             </div>
+
+            {/* Confirmation Dialog */}
+            <ConfirmationDialog
+                isOpen={dialogOpen}
+                onClose={closeDialog}
+                onConfirm={handleConfirm}
+                processing={processing}
+                {...getDialogConfig()}
+            />
         </ParentLayout>
     );
 }
