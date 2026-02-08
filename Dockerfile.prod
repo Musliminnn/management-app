@@ -63,19 +63,16 @@ RUN useradd -G www-data,root -u 1000 -d /home/laravel laravel && \
     chown -R laravel:laravel /home/laravel
 
 # Copy application code
-COPY --chown=laravel:laravel . /var/www
+COPY . /var/www
 
-# Switch to laravel user
-USER laravel
+# Set ownership
+RUN chown -R laravel:laravel /var/www
 
-# Install composer dependencies (production)
+# Install composer dependencies (production) as root first
 RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Install npm dependencies and build
 RUN npm ci && npm run build && rm -rf node_modules
-
-# Switch back to root for permissions
-USER root
 
 # Set permissions
 RUN chown -R laravel:laravel /var/www && \
